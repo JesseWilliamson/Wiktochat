@@ -1,0 +1,18 @@
+<div class="trestle">
+  <canvas #canvas class="canvas"></canvas>
+  <div class="controls">
+    <div class="leftControls">
+      <input type="color" [(ngModel)]="selectedColor" id="colorPicker" />
+      <button class="primary">_</button>
+      <button class="icon">text_fields</button>
+      <button class="icon">ink_eraser</button>
+      <button class="icon" (click)="clearGrid()">delete</button>
+    </div>
+    <div class="rightControls">
+      <button (click)="clearGrid()">Clear</button>
+      <button class="primary" (click)="clearGrid()">Submit</button>
+      <button class="success" (click)="clearGrid()">Grab</button>
+      <div></div>
+    </div>
+  </div>
+</div>
