@@ -1,29 +1,30 @@
 package wiktochat.roomserver;
 
-import org.springframework.stereotype.Service;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class ChatService {
     private final ConcurrentHashMap<String, ChatRoom> rooms = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> userSessions = new ConcurrentHashMap<>();
 
-    public String createRoom(String username) {
-        String roomId = generateRoomId();
-        ChatRoom room = new ChatRoom(roomId);
-        room.addUser(username);
-        rooms.put(roomId, room);
-        userSessions.put(username, roomId);
-        return roomId;
+    public String createRoom(String roomID) {
+        ChatRoom room = new ChatRoom(roomID);
+        rooms.put(roomID, room);
+        System.out.println("Created room " + roomID + ". Total rooms: " + rooms.toString());
+        return roomID;
     }
 
-    public void joinRoom(String roomId, String username) {
+    public void joinRoom(String sessionId, String roomId) {
+        System.out.println("ChatService.joinRoom - Session: " + sessionId + " Room: " + roomId);
         ChatRoom room = rooms.get(roomId);
         if (room != null) {
-            room.addUser(username);
-            userSessions.put(username, roomId);
+            userSessions.put(sessionId, roomId);
+            System.out.println("Current users in sessions: " + userSessions.toString());
         } else {
+            System.out.println("Room not found: " + roomId);
             throw new RuntimeException("Room not found");
         }
     }
@@ -39,10 +40,12 @@ public class ChatService {
     }
 
     public ChatRoom getRoomData(String roomId) {
+        System.out.println("Getting room data for: " + roomId);
         return rooms.get(roomId);
     }
 
-    private String generateRoomId() {
+    // TODO: make sure this doesn't generate duplicate IDs
+    public String generateRoomId() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder roomId = new StringBuilder();
         Random random = new Random();

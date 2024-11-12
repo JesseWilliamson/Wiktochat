@@ -1,1 +1,6 @@
-/home/jesse/Code/wiktochat/RoomServer/roomserver/src/main/java/wiktochat/roomserver/RoomserverApplication.java
+/home/jesse/Code/wiktochat/RoomServer/src/main/java/wiktochat/roomserver/ChatController.java
+/home/jesse/Code/wiktochat/RoomServer/src/main/java/wiktochat/roomserver/ChatMessage.java
+/home/jesse/Code/wiktochat/RoomServer/src/main/java/wiktochat/roomserver/ChatRoom.java
+/home/jesse/Code/wiktochat/RoomServer/src/main/java/wiktochat/roomserver/ChatRoomApplication.java
+/home/jesse/Code/wiktochat/RoomServer/src/main/java/wiktochat/roomserver/ChatService.java
+/home/jesse/Code/wiktochat/RoomServer/src/main/java/wiktochat/roomserver/WebSocketConfig.java
