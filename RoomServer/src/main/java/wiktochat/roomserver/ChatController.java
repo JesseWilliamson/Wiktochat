@@ -34,7 +34,7 @@ public class ChatController {
         String sessionId = headerAccessor.getSessionId();
         System.out.println("Join attempt - Session: " + sessionId + " Room: " + roomId);
         chatService.joinRoom(sessionId, roomId);
-        
+
         System.out.println("Broadcasting join message to room: " + roomId);
         messagingTemplate.convertAndSend("/topic/room/" + roomId,
             new ChatMessage("System", "User joined the room"));
@@ -47,7 +47,9 @@ public class ChatController {
 
     @MessageMapping("/chat.send")
     @SendTo("/topic/messages")
-    public void sendMessage(String username, String message) {
-        chatService.sendMessage(username, message);
+    public void sendMessage(StompHeaderAccessor headerAccessor, String message) {
+      System.out.println("ChatController.sendMessage - Message: " + message);
+      String sessionId = headerAccessor.getSessionId();
+      chatService.sendMessage(sessionId, message);
     }
 }

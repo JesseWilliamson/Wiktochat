@@ -29,12 +29,12 @@ public class ChatService {
         }
     }
 
-    public void sendMessage(String username, String message) {
-        String roomId = userSessions.get(username);
+    public void sendMessage(String sessionId, String message) {
+        String roomId = userSessions.get(sessionId);
         if (roomId != null) {
             ChatRoom room = rooms.get(roomId);
             if (room != null) {
-                room.addMessage(new ChatMessage(username, message));
+                room.addMessage(new ChatMessage(sessionId, message));
             }
         }
     }

@@ -1,6 +1,9 @@
 package wiktochat.roomserver;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ChatRoom {
     private String roomId;
@@ -22,6 +25,7 @@ public class ChatRoom {
     }
 
     public void addMessage(ChatMessage message) {
+        System.out.println("ChatRoom.addMessage - Message: " + message + " from " + message.getSender());
         messages.add(message);
     }
 

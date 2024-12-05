@@ -1,0 +1,14 @@
+<p>room-select works!</p>
+<div class="room-selector-box">
+  <div class="room-key" [innerHTML]="roomKey">ROOMKEY</div>
+  <button class="primary" (click)="getRoom()">Get Room</button>
+  <br />
+  username
+  <input type="text" [(ngModel)]="username" />
+  roomkey
+  <input type="text" [(ngModel)]="requestRoomKey" />
+  <button class="primary" (click)="requestRoom()">Request Room</button>
+  <br />
+  <input type="text" [(ngModel)]="message" placeholder="Type your message here" />
+  <button class="primary" (click)="sendMessage()">Send Message</button>
+</div>
