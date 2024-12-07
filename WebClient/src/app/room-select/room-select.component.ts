@@ -15,7 +15,6 @@ import SockJS from 'sockjs-client';
 export class RoomSelectComponent implements OnDestroy {
   private readonly stompClient: Client;
   public roomKey: string = "";
-  public requestRoomKey: string = "";
   public username: string = "";
   public message: string = "";
 
@@ -34,18 +33,18 @@ export class RoomSelectComponent implements OnDestroy {
   }
 
   public requestRoom() {
-    if (!this.requestRoomKey || !this.username) {
+    if (!this.roomKey || !this.username) {
       console.error('Room key and username are required');
       return;
     }
 
     this.stompClient.publish({
-      destination: `/app/rooms/${this.requestRoomKey}/join`,
+      destination: `/app/rooms/${this.roomKey}/join`,
       body: JSON.stringify({ username: this.username })
     });
 
     // Subscribe to room messages
-    this.stompClient.subscribe(`/rooms/${this.requestRoomKey}/messages`, (message) => {
+    this.stompClient.subscribe(`/rooms/${this.roomKey}/messages`, (message) => {
       console.log('Received:', JSON.parse(message.body));
     });
   }
@@ -56,9 +55,11 @@ export class RoomSelectComponent implements OnDestroy {
       return;
     }
 
+    console.log("Sending message to " + this.roomKey)
+
     this.stompClient.publish({
-      destination: `/app/rooms/${this.requestRoomKey}/messages`,
-      body: this.message
+      destination: `/app/rooms/${this.roomKey}/messages`,
+      body: JSON.stringify({ message: this.message })
     });
 
     this.message = "";

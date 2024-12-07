@@ -37,6 +37,7 @@ public class ChatService {
   public void sendMessage(String sessionId, String roomId, String message) {
     if (!roomManager.isUserInRoom(sessionId, roomId)) {
       System.out.println("User " + sessionId + " tried to send a message to a room (" + roomId + ") which they aren't in!");
+      System.out.println("Users in " + roomId + " are " + roomManager.getUsersInRoom(roomId));
       return;
     }
     ChatRoom room = rooms.get(roomId);

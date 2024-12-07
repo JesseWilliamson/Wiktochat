@@ -3,6 +3,7 @@ package wiktochat.roomserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -45,9 +46,9 @@ public class ChatController {
     }
 
     @MessageMapping("/rooms/{roomId}/messages")
-    public void sendMessage(StompHeaderAccessor headerAccessor, @PathVariable String roomId, String message) {
-        System.out.println("ChatController.sendMessage - Message: " + message);
+    public void sendMessage(StompHeaderAccessor headerAccessor, @DestinationVariable String roomId, @Payload MessageDTO message) {
+        System.out.println("ChatController.sendMessage - Message: " + message.getMessage() + " Room: " + roomId);
         String sessionId = headerAccessor.getSessionId();
-        chatService.sendMessage(sessionId, roomId, message);
+        chatService.sendMessage(sessionId, roomId, message.getMessage());
     }
 }
