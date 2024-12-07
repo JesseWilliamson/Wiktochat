@@ -3,12 +3,18 @@ package wiktochat.roomserver;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ChatService {
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
     private final ConcurrentHashMap<String, ChatRoom> rooms = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, String> userSessions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
+    private final RoomManager roomManager = new RoomManager();
 
     public String createRoom(String roomID) {
         ChatRoom room = new ChatRoom(roomID);
@@ -21,7 +27,8 @@ public class ChatService {
         System.out.println("ChatService.joinRoom - Session: " + sessionId + " Room: " + roomId);
         ChatRoom room = rooms.get(roomId);
         if (room != null) {
-            userSessions.put(sessionId, roomId);
+            roomManager.addUserToRoom(sessionId, roomId);
+            users.get(sessionId).addChatRoom(room);
             System.out.println("Current users in sessions: " + userSessions.toString());
         } else {
             System.out.println("Room not found: " + roomId);
@@ -29,14 +36,26 @@ public class ChatService {
         }
     }
 
-    public void sendMessage(String sessionId, String message) {
+    public void sendMessage(String sessionId, String RoomId, String message) {
         String roomId = userSessions.get(sessionId);
         if (roomId != null) {
             ChatRoom room = rooms.get(roomId);
             if (room != null) {
-                room.addMessage(new ChatMessage(sessionId, message));
+                ChatMessage chatMessage = new ChatMessage(sessionId, message);
+                room.addMessage(chatMessage);
+                // Broadcast the message to all users subscribed to this room's topic
+                messagingTemplate.convertAndSend("/room/messages" + roomId, chatMessage);
             }
         }
+    }
+
+    public String broadCastToRoom(String roomId, ChatMessage message) {
+        ChatRoom room = rooms.get(roomId);
+        if (room != null) {
+            room.addMessage(message);
+            return roomId;
+        }
+        return null;
     }
 
     public ChatRoom getRoomData(String roomId) {

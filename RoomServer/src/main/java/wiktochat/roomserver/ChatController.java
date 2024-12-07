@@ -3,7 +3,6 @@ package wiktochat.roomserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -29,7 +28,7 @@ public class ChatController {
         this.chatService.createRoom(roomID);
     }
 
-    @MessageMapping("/room.join/{roomId}")
+    @MessageMapping("/rooms/join/{roomId}")
     public void handleJoinRoom(@DestinationVariable String roomId, StompHeaderAccessor headerAccessor) {
         String sessionId = headerAccessor.getSessionId();
         System.out.println("Join attempt - Session: " + sessionId + " Room: " + roomId);
@@ -40,16 +39,15 @@ public class ChatController {
             new ChatMessage("System", "User joined the room"));
     }
 
-    @GetMapping("/api/rooms/{roomId}")
+    @GetMapping("/rooms/info/{roomId}")
     public ChatRoom getRoomData(@PathVariable String roomId) {
         return chatService.getRoomData(roomId);
     }
 
-    @MessageMapping("/chat.send")
-    @SendTo("/topic/messages")
-    public void sendMessage(StompHeaderAccessor headerAccessor, String message) {
-      System.out.println("ChatController.sendMessage - Message: " + message);
-      String sessionId = headerAccessor.getSessionId();
-      chatService.sendMessage(sessionId, message);
+    @MessageMapping("/rooms/{roomId}/messages")
+    public void sendMessage(StompHeaderAccessor headerAccessor, @PathVariable String roomId, String message) {
+        System.out.println("ChatController.sendMessage - Message: " + message);
+        String sessionId = headerAccessor.getSessionId();
+        chatService.sendMessage(sessionId, roomId, message);
     }
 }

@@ -29,12 +29,8 @@ export class RoomSelectComponent implements OnDestroy {
     this.stompClient.activate();
   }
 
-  public randomAlphaNumeric(length: number): string {
-    return "abcd1234";
-  }
-
   public getRoom() {
-    this.roomKey = this.randomAlphaNumeric(8);
+    console.log("Nothing here yet")
   }
 
   public requestRoom() {
@@ -44,12 +40,12 @@ export class RoomSelectComponent implements OnDestroy {
     }
 
     this.stompClient.publish({
-      destination: `/app/room.join/${this.requestRoomKey}`,
+      destination: `/rooms/${this.requestRoomKey}/join`,
       body: JSON.stringify({ username: this.username })
     });
 
     // Subscribe to room messages
-    this.stompClient.subscribe(`/topic/room/${this.requestRoomKey}`, (message) => {
+    this.stompClient.subscribe(`/rooms/${this.requestRoomKey}/messages`, (message) => {
       console.log('Received:', JSON.parse(message.body));
     });
   }
@@ -61,7 +57,7 @@ export class RoomSelectComponent implements OnDestroy {
     }
 
     this.stompClient.publish({
-      destination: '/app/chat.send',
+      destination: `/rooms/${this.requestRoomKey}/messages`,
       body: this.message
     });
 
