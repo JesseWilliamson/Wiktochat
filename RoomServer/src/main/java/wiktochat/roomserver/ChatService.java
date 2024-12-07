@@ -46,15 +46,6 @@ public class ChatService {
     messagingTemplate.convertAndSend(String.format("rooms/%s/messages", roomId), chatMessage);
   }
 
-  public String broadCastToRoom(String roomId, ChatMessage message) {
-    ChatRoom room = rooms.get(roomId);
-    if (room != null) {
-      room.addMessage(message);
-      return roomId;
-    }
-    return null;
-  }
-
   public ChatRoom getRoomData(String roomId) {
     System.out.println("Getting room data for: " + roomId);
     return rooms.get(roomId);
