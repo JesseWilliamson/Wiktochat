@@ -31,19 +31,19 @@ public class ChatService {
       System.out.println("Current users in " + roomId + ": " + roomManager.getUsersInRoom(roomId));
     } else {
       System.out.println("Room not found: " + roomId);
-      throw new RuntimeException("Room not found");
     }
   }
 
-  public void sendMessage(String sessionId, String RoomId, String message) {
-    if ()
-    ChatRoom room = rooms.get(roomId);
-    if (room != null) {
-      ChatMessage chatMessage = new ChatMessage(sessionId, message);
-      room.addMessage(chatMessage);
-      // Broadcast the message to all users subscribed to this room's topic
-      messagingTemplate.convertAndSend("/room/messages" + roomId, chatMessage);
+  public void sendMessage(String sessionId, String roomId, String message) {
+    if (!roomManager.isUserInRoom(sessionId, roomId)) {
+      System.out.println("User " + sessionId + " tried to send a message to a room (" + roomId + ") which they aren't in!");
+      return;
     }
+    ChatRoom room = rooms.get(roomId);
+    ChatMessage chatMessage = new ChatMessage(sessionId, message);
+    room.addMessage(chatMessage);
+    // Broadcast the message to all users subscribed to this room's topic
+    messagingTemplate.convertAndSend(String.format("rooms/%s/messages", roomId), chatMessage);
   }
 
   public String broadCastToRoom(String roomId, ChatMessage message) {
