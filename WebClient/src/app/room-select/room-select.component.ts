@@ -40,7 +40,7 @@ export class RoomSelectComponent implements OnDestroy {
     }
 
     this.stompClient.publish({
-      destination: `/rooms/${this.requestRoomKey}/join`,
+      destination: `/app/rooms/${this.requestRoomKey}/join`,
       body: JSON.stringify({ username: this.username })
     });
 
@@ -57,7 +57,7 @@ export class RoomSelectComponent implements OnDestroy {
     }
 
     this.stompClient.publish({
-      destination: `/rooms/${this.requestRoomKey}/messages`,
+      destination: `/app/rooms/${this.requestRoomKey}/messages`,
       body: this.message
     });
 
