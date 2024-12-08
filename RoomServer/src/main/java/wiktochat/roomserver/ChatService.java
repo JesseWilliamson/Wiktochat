@@ -31,6 +31,7 @@ public class ChatService {
       System.out.println("Current users in " + roomId + ": " + roomManager.getUsersInRoom(roomId));
     } else {
       System.out.println("Room not found: " + roomId);
+      throw new RuntimeException("Room not found");
     }
   }
 

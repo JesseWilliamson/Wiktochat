@@ -1,10 +1,13 @@
 package wiktochat.roomserver;
 
+import java.security.Principal;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,23 +24,29 @@ public class ChatController {
     private ChatService chatService;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private SimpMessagingTemplate simpMessagingTemplate;
 
-    @PostConstruct
+  @PostConstruct
     public void init() {
         String roomID = chatService.generateRoomId();
         this.chatService.createRoom(roomID);
     }
 
     @MessageMapping("/rooms/{roomId}/join")
-    public void handleJoinRoom(@DestinationVariable String roomId, StompHeaderAccessor headerAccessor) {
+    @SendToUser("/queue/responses")
+    public JoinRoomResponse handleJoinRoom(@DestinationVariable String roomId, StompHeaderAccessor headerAccessor, Principal principal) {
         String sessionId = headerAccessor.getSessionId();
-        System.out.println("Join attempt - Session: " + sessionId + " Room: " + roomId);
-        chatService.joinRoom(sessionId, roomId);
-
-        System.out.println("Broadcasting join message to room: " + roomId);
-        messagingTemplate.convertAndSend("/rooms/" + roomId + "/messages",
-            new ChatMessage("System", "User joined the room"));
+        System.out.println("Join attempt - Session: " + sessionId + " Room: " + roomId + "principal: " + principal.getName() );
+    
+        try {
+            chatService.joinRoom(sessionId, roomId);
+            System.out.println("Broadcasting join message to room: " + roomId);
+            simpMessagingTemplate.convertAndSend("/rooms/" + roomId + "/messages",
+                new ChatMessage("System", "User joined the room"));
+            return new JoinRoomResponse(true, "Successfully joined room");
+        } catch (Exception e) {
+            return new JoinRoomResponse(false, "Failed to join room: " + e.getMessage());
+        }
     }
 
     @GetMapping("/rooms/{roomId}/info")

@@ -1,6 +1,9 @@
-import { Component, OnDestroy } from '@angular/core';
+  import { Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Client } from '@stomp/stompjs';
+import { Router } from '@angular/router';
+import { SessionService } from '../session-service.service';
+
 import SockJS from 'sockjs-client';
 
 @Component({
@@ -15,12 +18,16 @@ import SockJS from 'sockjs-client';
 export class RoomSelectComponent implements OnDestroy {
   private readonly stompClient: Client;
   public roomKey: string = "";
-  public username: string = "";
-  public message: string = "";
 
-  constructor() {
+  constructor(
+    private router: Router,
+    private sessionService: SessionService
+  ) {
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      connectHeaders: {
+        sessionId: this.sessionService.getSessionId()
+      },
       onConnect: () => {
         console.log('Connected to WebSocket');
       },
@@ -28,41 +35,31 @@ export class RoomSelectComponent implements OnDestroy {
     this.stompClient.activate();
   }
 
-  public getRoom() {
+  public createRoom() {
     console.log("Nothing here yet")
   }
 
-  public requestRoom() {
-    if (!this.roomKey || !this.username) {
-      console.error('Room key and username are required');
-      return;
-    }
+  public joinRoom() {
+    console.log("Joining room " + this.roomKey);
 
+    // Subscribe to user-specific queue
+    const subscription = this.stompClient.subscribe('/user/queue/responses', (message) => {
+      const response = JSON.parse(message.body);
+      console.log("Got a response!", response);
+      if (response.success) {
+        console.log("Successfully joined room");
+          // this.router.navigate(['/trestle', this.roomKey]);
+        } else {
+          console.log("Failed to join room");
+            alert(response.message);
+        }
+        subscription.unsubscribe();
+    });
+
+    // Then send the join request
     this.stompClient.publish({
-      destination: `/app/rooms/${this.roomKey}/join`,
-      body: JSON.stringify({ username: this.username })
+      destination: `/app/rooms/${this.roomKey}/join`
     });
-
-    // Subscribe to room messages
-    this.stompClient.subscribe(`/rooms/${this.roomKey}/messages`, (message) => {
-      console.log('Received:', JSON.parse(message.body));
-    });
-  }
-
-  public sendMessage() {
-    if (!this.message) {
-      console.error('Message cannot be empty');
-      return;
-    }
-
-    console.log("Sending message to " + this.roomKey)
-
-    this.stompClient.publish({
-      destination: `/app/rooms/${this.roomKey}/messages`,
-      body: JSON.stringify({ message: this.message })
-    });
-
-    this.message = "";
   }
 
   ngOnDestroy() {
