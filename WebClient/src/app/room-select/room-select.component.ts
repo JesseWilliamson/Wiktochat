@@ -36,11 +36,28 @@ export class RoomSelectComponent implements OnDestroy {
   }
 
   public createRoom() {
-    console.log("Nothing here yet")
+    console.log("Requesting to create room");
+
+    const subscription = this.stompClient.subscribe('/user/queue/responses', (message) => {
+      const response = JSON.parse(message.body);
+      console.log("Got a response!", response);
+      if (response.success) {
+        console.log("Successfully created room");
+        // this.router.navigate(['/trestle', this.roomKey]);
+      } else {
+        console.log("Failed to create room");
+        alert(response.message);
+      }
+      subscription.unsubscribe();
+    });
+
+    this.stompClient.publish({
+      destination: `/app/rooms/create`,
+    })
   }
 
   public joinRoom() {
-    console.log("Joining room " + this.roomKey);
+    console.log("Requesting to join room " + this.roomKey);
 
     // Subscribe to user-specific queue
     const subscription = this.stompClient.subscribe('/user/queue/responses', (message) => {

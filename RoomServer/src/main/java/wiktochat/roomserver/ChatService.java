@@ -1,5 +1,6 @@
 package wiktochat.roomserver;
 
+import java.security.Principal;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,18 +17,19 @@ public class ChatService {
   private final ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
   private final RoomManager roomManager = new RoomManager();
 
-  public String createRoom(String roomID) {
-    ChatRoom room = new ChatRoom(roomID);
-    rooms.put(roomID, room);
-    System.out.println("Created room " + roomID + ". Total rooms: " + rooms.toString());
-    return roomID;
+  public String createRoom(Principal principal) {
+    String roomId = generateRoomId();
+    ChatRoom room = new ChatRoom(roomId);
+    rooms.put(roomId, room);
+    System.out.println("Created room " + roomId + ". Total rooms: " + rooms.toString());
+    return roomId;
   }
 
-  public void joinRoom(String sessionId, String roomId) {
-    System.out.println("ChatService.joinRoom - Session: " + sessionId + " Room: " + roomId);
+  public void joinRoom(Principal principal, String roomId) {
+    System.out.println("ChatService.joinRoom - Principal: " + principal.getName() + " Room: " + roomId);
     ChatRoom room = rooms.get(roomId);
     if (room != null) {
-      roomManager.addUserToRoom(sessionId, roomId);
+      roomManager.addUserToRoom(principal, roomId);
       System.out.println("Current users in " + roomId + ": " + roomManager.getUsersInRoom(roomId));
     } else {
       System.out.println("Room not found: " + roomId);
@@ -35,14 +37,14 @@ public class ChatService {
     }
   }
 
-  public void sendMessage(String sessionId, String roomId, String message) {
-    if (!roomManager.isUserInRoom(sessionId, roomId)) {
-      System.out.println("User " + sessionId + " tried to send a message to a room (" + roomId + ") which they aren't in!");
+  public void sendMessage(Principal principal, String roomId, String message) {
+    if (!roomManager.isUserInRoom(principal, roomId)) {
+      System.out.println("User " + principal + " tried to send a message to a room (" + roomId + ") which they aren't in!");
       System.out.println("Users in " + roomId + " are " + roomManager.getUsersInRoom(roomId));
       return;
     }
     ChatRoom room = rooms.get(roomId);
-    ChatMessage chatMessage = new ChatMessage(sessionId, message);
+    ChatMessage chatMessage = new ChatMessage(principal, message);
     room.addMessage(chatMessage);
     // Broadcast the message to all users subscribed to this room's topic
     messagingTemplate.convertAndSend(String.format("rooms/%s/messages", roomId), chatMessage);

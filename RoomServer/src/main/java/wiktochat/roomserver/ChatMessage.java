@@ -1,19 +1,23 @@
 package wiktochat.roomserver;
 
+import java.security.Principal;
+
 public class ChatMessage {
-    private String sender;
+    private Principal sender;
     private String content;
 
-    public ChatMessage(String sender, String content) {
+    public ChatMessage(Principal sender, String content) {
         this.sender = sender;
         this.content = content;
     }
 
-    public String getSender() {
+    public ChatMessage(String content) { this.content = content; }
+
+    public Principal getSender() {
         return sender;
     }
 
-    public void setSender(String sender) {
+    public void setSender(Principal sender) {
         this.sender = sender;
     }
 
