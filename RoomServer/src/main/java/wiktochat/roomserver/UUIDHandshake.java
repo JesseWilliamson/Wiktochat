@@ -8,7 +8,7 @@ import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 
-public class CustomHandshakeHandler extends DefaultHandshakeHandler {
+public class UUIDHandshake extends DefaultHandshakeHandler {
   // Custom class for storing principal
   @Override
   protected Principal determineUser(ServerHttpRequest request,

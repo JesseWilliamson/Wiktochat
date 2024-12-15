@@ -1,5 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 interface Point {
   x: number;
@@ -23,9 +24,16 @@ export class TrestleComponent {
   @ViewChild('canvas') canvas!: ElementRef<HTMLCanvasElement>;
   selectedColor: string = '#000000';  // Default color black
 
-  constructor() {
+  constructor(
+    private route: ActivatedRoute,
+  ) {
     this.grid = new Array(this.CANVAS_WIDTH).fill(new Int8Array(this.CANVAS_HEIGHT))
     console.log(this.grid);
+
+    this.route.params.subscribe(params => {
+      const roomId = params['id'];
+      console.log('Room ID:', roomId);
+    })
   }
   private isDrawing = false;
 

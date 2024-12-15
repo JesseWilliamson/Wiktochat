@@ -43,7 +43,7 @@ export class RoomSelectComponent implements OnDestroy {
       console.log("Got a response!", response);
       if (response.success) {
         console.log("Successfully created room");
-        // this.router.navigate(['/trestle', this.roomKey]);
+        this.router.navigate(['/trestle', response.roomId]);
       } else {
         console.log("Failed to create room");
         alert(response.message);
@@ -65,12 +65,12 @@ export class RoomSelectComponent implements OnDestroy {
       console.log("Got a response!", response);
       if (response.success) {
         console.log("Successfully joined room");
-          // this.router.navigate(['/trestle', this.roomKey]);
-        } else {
-          console.log("Failed to join room");
-            alert(response.message);
-        }
-        subscription.unsubscribe();
+        this.router.navigate(['/trestle', this.roomKey]);
+      } else {
+        console.log("Failed to join room");
+        alert(response.message);
+      }
+      subscription.unsubscribe();
     });
 
     // Then send the join request
