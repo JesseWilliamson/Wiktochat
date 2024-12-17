@@ -8,11 +8,11 @@ interface Point {
 }
 
 @Component({
-  selector: 'app-trestle',
+  selector: 'app-canvas',
   standalone: true,
   imports: [FormsModule],
-  templateUrl: './trestle.component.html',
-  styleUrl: './trestle.component.less'
+  templateUrl: './easel.component.html',
+  styleUrl: './easel.component.less'
 })
 export class TrestleComponent implements AfterViewInit {
   private readonly CANVAS_WIDTH: number = 1200;  // Adjust size as needed
