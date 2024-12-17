@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TrestleComponent } from './trestle.component';
+import { EaselComponent } from './easel.component';
 
 describe('TrestleComponent', () => {
-  let component: TrestleComponent;
-  let fixture: ComponentFixture<TrestleComponent>;
+  let component: EaselComponent;
+  let fixture: ComponentFixture<EaselComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TrestleComponent]
+      imports: [EaselComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(TrestleComponent);
+    fixture = TestBed.createComponent(EaselComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
