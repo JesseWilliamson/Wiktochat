@@ -2,7 +2,6 @@
 import { FormsModule } from '@angular/forms';
 import { Client } from '@stomp/stompjs';
 import { Router } from '@angular/router';
-import { SessionService } from '../session-service.service';
 
 import SockJS from 'sockjs-client';
 
@@ -21,13 +20,9 @@ export class RoomSelectComponent implements OnDestroy {
 
   constructor(
     private router: Router,
-    private sessionService: SessionService
   ) {
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-      connectHeaders: {
-        sessionId: this.sessionService.getSessionId()
-      },
       onConnect: () => {
         console.log('Connected to WebSocket');
       },
