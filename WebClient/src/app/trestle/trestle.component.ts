@@ -66,24 +66,6 @@ export class TrestleComponent {
     // Clear with white background
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
-
-    // // Draw grid with crisp lines
-    // ctx.strokeStyle = '#f8f8f8';
-    // for(let i = 0; i < this.CANVAS_WIDTH + this.PIXEL_SIZE; i += this.PIXEL_SIZE) {
-    //     const x = Math.floor(i) + 0.5;
-    //     ctx.beginPath();
-    //     ctx.moveTo(x, 0);
-    //     ctx.lineTo(x, this.CANVAS_HEIGHT);
-    //     ctx.stroke();
-    // }
-
-    // for(let i = 0; i < this.CANVAS_HEIGHT + this.PIXEL_SIZE; i += this.PIXEL_SIZE) {
-    //     const y = Math.floor(i) + 0.5;
-    //     ctx.beginPath();
-    //     ctx.moveTo(0, y);
-    //     ctx.lineTo(this.CANVAS_WIDTH, y);
-    //     ctx.stroke();
-    // }
   }
 
   private startDrawing(e: MouseEvent): void {
