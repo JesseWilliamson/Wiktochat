@@ -1,10 +1,19 @@
 package wiktochat.roomserver;
 
+import java.security.Principal;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.annotation.PostConstruct;
 
 @RestController
 @CrossOrigin
@@ -14,29 +23,51 @@ public class ChatController {
     private ChatService chatService;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private SimpMessagingTemplate simpMessagingTemplate;
 
-    @PostMapping("/api/rooms")
-    public String createRoom(@RequestParam String username) {
-        return chatService.createRoom(username);
+  @PostConstruct
+    public void init() {
     }
 
-    @PostMapping("/api/rooms/{roomId}/join")
-    public void joinRoom(@PathVariable String roomId, @RequestParam String username) {
-        chatService.joinRoom(roomId, username);
-        // Notify other users about new join
-        messagingTemplate.convertAndSend("/topic/room/" + roomId,
-            new ChatMessage("System", username + " joined the room"));
+    @MessageMapping("/rooms/{roomId}/join")
+    @SendToUser("/queue/responses")
+    public JoinRoomResponse handleJoinRoom(@DestinationVariable String roomId, StompHeaderAccessor headerAccessor, Principal principal) {
+        System.out.println("Join attempt - principal: " + principal.getName() + " Room: " + roomId );
+
+        try {
+            chatService.joinRoom(principal, roomId);
+            System.out.println("Broadcasting join message to room: " + roomId);
+            simpMessagingTemplate.convertAndSend("/rooms/" + roomId + "/messages",
+                new ChatMessage("User joined the room"));
+            return new JoinRoomResponse(true, "Successfully joined room");
+        } catch (Exception e) {
+            return new JoinRoomResponse(false, "Failed to join room: " + e.getMessage());
+        }
     }
 
-    @GetMapping("/api/rooms/{roomId}")
+    @GetMapping("/rooms/{roomId}/info")
     public ChatRoom getRoomData(@PathVariable String roomId) {
         return chatService.getRoomData(roomId);
     }
 
-    @MessageMapping("/chat.send")
-    @SendTo("/topic/messages")
-    public void sendMessage(String username, String message) {
-        chatService.sendMessage(username, message);
+    @MessageMapping("/rooms/create")
+    @SendToUser("/queue/responses")
+    public CreateRoomResponse handleCreateRoom(StompHeaderAccessor headerAccessor, Principal principal) {
+      System.out.println("Room create attempt - principal: " + principal );
+
+      try {
+        String roomId = chatService.createRoom(principal);
+        System.out.println("Room created: " + roomId + " by " + principal.getName() );
+        return new CreateRoomResponse(true, "Room created", roomId);
+      } catch (Exception e) {
+        return new CreateRoomResponse(false, "Failed to create room: " + e.getMessage(), null);
+      }
     }
+
+//    @MessageMapping("/rooms/{roomId}/messages")
+//    public void sendMessage(StompHeaderAccessor headerAccessor, @DestinationVariable String roomId, @Payload MessageDTO message) {
+//        System.out.println("ChatController.sendMessage - Message: " + message.getMessage() + " Room: " + roomId);
+//        String sessionId = headerAccessor.getSessionId();
+//        chatService.sendMessage(sessionId, roomId, message.getMessage());
+//    }
 }

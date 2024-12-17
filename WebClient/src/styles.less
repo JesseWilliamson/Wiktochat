@@ -1,0 +1,122 @@
+/* You can add global styles to this file, and also import other style files */
+
+.main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    color: hsl(0, 0%, 0%);
+    // text-shadow: 2px 4px 5px hsl(230, 28%, 25%);
+    // epilogue typeface by google fonts
+    font-family: 'Epilogue', sans-serif;
+    font-weight: 700;
+    font-size: 4rem;
+    color: hsl(238, 100%, 50%);
+}
+
+input {
+  font-size: 1.25rem;
+  background-color: hsl(0, 0%, 100%);
+  border: 1px solid hsl(0, 0%, 0%);
+  border-radius: 5px;
+  box-shadow: 1px 1px hsl(0, 0%, 0%);
+  padding: 0.6rem;
+
+
+
+  &:focus {
+    outline: none;
+  }
+}
+
+button {
+    font-size: 1.25rem;
+    background-color: hsl(0, 0%, 100%);
+    border: 1px solid hsl(0, 0%, 0%);
+    border-radius: 5px;
+    box-shadow: 1px 1px hsl(0, 0%, 0%);
+    padding: 0.6rem;
+
+    &:hover {
+        background-color: hsl(0, 0%, 95%);
+        cursor: pointer;
+    }
+
+    &:active {
+        background-color: hsl(0, 0%, 90%);
+        box-shadow: none;
+        transform: translate(1px, 1px);
+    }
+
+    &.primary {
+        background-color: hsl(215, 100%, 50%);
+        color: white;
+
+        &:hover {
+            background-color: hsl(215, 100%, 45%);
+        }
+
+        &:active {
+            background-color: hsl(215, 100%, 40%);
+        }
+    }
+
+    &.success {
+        background-color: hsl(145, 80%, 40%);
+        color: white;
+
+        &:hover {
+            background-color: hsl(145, 80%, 35%);
+        }
+
+        &:active {
+            background-color: hsl(145, 80%, 30%);
+        }
+    }
+
+    &.danger {
+        background-color: hsl(0, 80%, 50%);
+        color: white;
+
+        &:hover {
+            background-color: hsl(0, 80%, 45%);
+        }
+
+        &:active {
+            background-color: hsl(0, 80%, 40%);
+        }
+    }
+
+    &.icon {
+        font-family: 'Material Symbols Outlined';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24;
+    }
+}
+
+.label {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.box {
+    border: 1px solid black;
+    border-radius: 10px;
+    box-shadow: 5px 5px hsl(0, 0%, 0%);
+    padding: 1rem;
+}

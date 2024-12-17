@@ -1,20 +1,39 @@
 package wiktochat.roomserver;
 
-import java.time.LocalDateTime;
+import java.security.Principal;
 
 public class ChatMessage {
-    private String sender;
+    private Principal sender;
     private String content;
-    private LocalDateTime timestamp;
 
-    public ChatMessage(String sender, String content) {
+    public ChatMessage(Principal sender, String content) {
         this.sender = sender;
         this.content = content;
-        this.timestamp = LocalDateTime.now();
     }
 
-    // Getters
-    public String getSender() { return sender; }
-    public String getContent() { return content; }
-    public LocalDateTime getTimestamp() { return timestamp; }
+    public ChatMessage(String content) { this.content = content; }
+
+    public Principal getSender() {
+        return sender;
+    }
+
+    public void setSender(Principal sender) {
+        this.sender = sender;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    @Override
+    public String toString() {
+        return "ChatMessage{" +
+                "sender='" + sender + '\'' +
+                ", content='" + content + '\'' +
+                '}';
+    }
 }

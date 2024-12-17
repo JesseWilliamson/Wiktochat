@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+    <div>
+        <button onclick="connect()">Connect</button>
+        <button onclick="joinRoom()">Join Room</button>
+        <button onclick="disconnect()">Disconnect</button>
+    </div>
+    <div>
+        <input type="text" id="roomId" value="room1" placeholder="Room ID">
+    </div>
+    <div id="messages" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll;">
+    </div>
+
+    <script>
+        let stompClient = null;
+        
+        function connect() {
+            let socket = new SockJS('http://localhost:8080/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function(frame) {
+                console.log('Connected: ' + frame);
+                addMessage('Connected to WebSocket');
+            });
+        }
+
+        function joinRoom() {
+            let roomId = document.getElementById('roomId').value;
+            
+            // Subscribe to room messages
+            stompClient.subscribe('/topic/room/' + roomId, function(message) {
+                console.log('Received:', message);
+                addMessage('Received: ' + message.body);
+            });
+
+            // Send join message
+            stompClient.send("/app/room.join/" + roomId, {}, JSON.stringify({}));
+            addMessage('Joined room: ' + roomId);
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+                addMessage('Disconnected');
+            }
+        }
+
+        function addMessage(message) {
+            let messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML += '<div>' + message + '</div>';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
