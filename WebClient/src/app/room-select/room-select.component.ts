@@ -38,7 +38,7 @@ export class RoomSelectComponent implements OnDestroy {
       console.log("Got a response!", response);
       if (response.success) {
         console.log("Successfully created room");
-        this.router.navigate(['/trestle', response.roomId]);
+        this.router.navigate(['/chat', response.roomId]);
       } else {
         console.log("Failed to create room");
         alert(response.message);
