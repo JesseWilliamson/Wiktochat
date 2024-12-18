@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import {RoomSelectComponent} from './room-select/room-select.component';
-import {EaselComponent} from './trestle/easel.component';
+import {EaselComponent} from './easel/easel.component';
 import {ChatComponent} from './chat/chat.component';
 
 export const routes: Routes = [

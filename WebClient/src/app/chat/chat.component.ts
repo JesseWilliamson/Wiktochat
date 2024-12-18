@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { EaselComponent} from '../trestle/easel.component';
+import { EaselComponent} from '../easel/easel.component';
 import {MessageFeedComponent} from '../message-feed/message-feed.component';
 
 @Component({
