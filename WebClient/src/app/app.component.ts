@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { EaselComponent } from './trestle/easel.component';
+import { EaselComponent } from './easel/easel.component';
 import { RoomSelectComponent } from "./room-select/room-select.component";
 
 @Component({
