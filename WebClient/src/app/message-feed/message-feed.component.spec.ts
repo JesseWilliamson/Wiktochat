@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TrestleComponent } from './trestle.component';
+import { MessageFeedComponent } from './message-feed.component';
 
-describe('TrestleComponent', () => {
-  let component: TrestleComponent;
-  let fixture: ComponentFixture<TrestleComponent>;
+describe('MessageFeedComponent', () => {
+  let component: MessageFeedComponent;
+  let fixture: ComponentFixture<MessageFeedComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TrestleComponent]
+      imports: [MessageFeedComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(TrestleComponent);
+    fixture = TestBed.createComponent(MessageFeedComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
