@@ -9,6 +9,5 @@ import {MessageFeedComponent} from '../message-feed/message-feed.component';
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.less'
 })
-export class ChatComponent {
 
-}
+export class ChatComponent {}

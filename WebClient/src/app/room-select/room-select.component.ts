@@ -1,9 +1,7 @@
-  import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Client } from '@stomp/stompjs';
 import { Router } from '@angular/router';
-
-import SockJS from 'sockjs-client';
+import {MessageHandlerService} from '../message-handler.service';
 
 @Component({
   selector: 'app-room-select',
@@ -14,69 +12,28 @@ import SockJS from 'sockjs-client';
   templateUrl: './room-select.component.html',
   styleUrl: './room-select.component.less'
 })
-export class RoomSelectComponent implements OnDestroy {
-  private readonly stompClient: Client;
+
+export class RoomSelectComponent {
   public roomKey: string = "";
 
   constructor(
     private router: Router,
-  ) {
-    this.stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-      onConnect: () => {
-        console.log('Connected to WebSocket');
-      },
-    });
-    this.stompClient.activate();
+    private chatService: MessageHandlerService,
+  ) {}
+
+  public async createRoom(){
+    const response = await this.chatService.createRoom();
+    console.log(response);
+    if (response.success) {
+      await this.router.navigate(['/chat', response.roomId]);
+    }
   }
 
-  public createRoom() {
-    console.log("Requesting to create room");
-
-    const subscription = this.stompClient.subscribe('/user/queue/responses', (message) => {
-      const response = JSON.parse(message.body);
-      console.log("Got a response!", response);
-      if (response.success) {
-        console.log("Successfully created room");
-        this.router.navigate(['/chat', response.roomId]);
-      } else {
-        console.log("Failed to create room");
-        alert(response.message);
-      }
-      subscription.unsubscribe();
-    });
-
-    this.stompClient.publish({
-      destination: `/app/rooms/create`,
-    })
-  }
-
-  public joinRoom() {
-    console.log("Requesting to join room " + this.roomKey);
-
-    // Subscribe to user-specific queue
-    const subscription = this.stompClient.subscribe('/user/queue/responses', (message) => {
-      const response = JSON.parse(message.body);
-      console.log("Got a response!", response);
-      if (response.success) {
-        console.log("Successfully joined room");
-        this.router.navigate(['/trestle', this.roomKey]);
-      } else {
-        console.log("Failed to join room");
-        alert(response.message);
-      }
-      subscription.unsubscribe();
-    });
-
-    // Then send the join request
-    this.stompClient.publish({
-      destination: `/app/rooms/${this.roomKey}/join`
-    });
-  }
-
-  ngOnDestroy() {
-    if (this.stompClient) {
-      this.stompClient.deactivate();
+  public async joinRoom() {
+    const response = await this.chatService.joinRoom(this.roomKey);
+    console.log(response);
+    if (response.success) {
+      await this.router.navigate(['/chat', this.roomKey]);
     }
   }
 }
