@@ -16,7 +16,7 @@ import SockJS from 'sockjs-client';
 })
 export class RoomSelectComponent implements OnDestroy {
   private readonly stompClient: Client;
-  public roomKey: string = "";
+  public roomKey = "";
 
   constructor(
     private router: Router,

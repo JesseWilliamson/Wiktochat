@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
@@ -14,7 +14,7 @@ interface Point {
   templateUrl: './trestle.component.html',
   styleUrl: './trestle.component.less'
 })
-export class TrestleComponent {
+export class TrestleComponent implements AfterViewInit {
   private readonly CANVAS_WIDTH: number = 1200;  // Adjust size as needed
   private readonly CANVAS_HEIGHT: number = 600; // Adjust size as needed
   private readonly PIXEL_SIZE: number = 5;  // Add this constant
@@ -22,7 +22,7 @@ export class TrestleComponent {
   private grid: Int8Array[];
 
   @ViewChild('canvas') canvas!: ElementRef<HTMLCanvasElement>;
-  selectedColor: string = '#000000';  // Default color black
+  selectedColor = '#000000';  // Default color black
 
   constructor(
     private route: ActivatedRoute,
@@ -82,8 +82,8 @@ export class TrestleComponent {
     const points: Point[] = [];
 
     // Get the differences and determine direction
-    let dx = Math.abs(p2.x - p1.x);
-    let dy = Math.abs(p2.y - p1.y);
+    const dx = Math.abs(p2.x - p1.x);
+    const dy = Math.abs(p2.y - p1.y);
     const sx = p1.x < p2.x ? 1 : -1;
     const sy = p1.y < p2.y ? 1 : -1;
 
@@ -117,8 +117,8 @@ export class TrestleComponent {
 
   private clampPixel(x: number, y: number): Point {
     // Takes a pixel coordinate and returns the nearest cell
-    let xCell = Math.floor(x/this.PIXEL_SIZE)
-    let yCell = Math.floor(y/this.PIXEL_SIZE)
+    const xCell = Math.floor(x/this.PIXEL_SIZE)
+    const yCell = Math.floor(y/this.PIXEL_SIZE)
     // if either x or y cell is 0, print it and the original x and y
     if (xCell == 0 || yCell == 0) {
       console.log(x, y, xCell, yCell);
@@ -148,8 +148,8 @@ export class TrestleComponent {
 
     const clampedPosition = this.clampPixel(x, y);
     if (clampedPosition != this.lastPos && this.lastPos != null){
-      let points: Point[] = this.interpolatePoints(this.lastPos, clampedPosition)
-      for (let point of points) {
+      const points: Point[] = this.interpolatePoints(this.lastPos, clampedPosition)
+      for (const point of points) {
         this.drawCell(point.x, point.y, ctx);
       }
     }
