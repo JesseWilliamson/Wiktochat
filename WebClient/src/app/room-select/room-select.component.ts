@@ -13,7 +13,7 @@ import {MessageHandlerService} from '../message-handler.service';
   styleUrl: './room-select.component.less'
 })
 export class RoomSelectComponent {
-  public roomKey: string = "";
+  public roomKey = "";
 
   constructor(
     private router: Router,

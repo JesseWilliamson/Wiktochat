@@ -6,7 +6,6 @@ import SockJS from 'sockjs-client';
 @Injectable({
   providedIn: 'root'
 })
-
 export class MessageHandlerService {
   private stompClient: Client;
   private messages = signal<ChatMessage[]>([]);
@@ -38,7 +37,7 @@ export class MessageHandlerService {
   }
 
   public createRoom(): Promise<CreateRoomResponse> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe('/user/queue/responses', (message) => {
         const response = JSON.parse(message.body) as CreateRoomResponse;
         subscription.unsubscribe();
@@ -52,7 +51,7 @@ export class MessageHandlerService {
   }
 
   public joinRoom(roomKey: string): Promise<JoinRoomResponse> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe('/user/queue/responses', (message) => {
         const response = JSON.parse(message.body);
         subscription.unsubscribe();
@@ -64,5 +63,4 @@ export class MessageHandlerService {
       })
     })
   }
-
 }

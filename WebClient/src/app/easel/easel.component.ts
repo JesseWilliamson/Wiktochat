@@ -14,7 +14,7 @@ interface Point {
   templateUrl: './easel.component.html',
   styleUrl: './easel.component.less'
 })
-export class TrestleComponent implements AfterViewInit {
+export class EaselComponent implements AfterViewInit {
   private readonly CANVAS_WIDTH: number = 1200;  // Adjust size as needed
   private readonly CANVAS_HEIGHT: number = 600; // Adjust size as needed
   private readonly PIXEL_SIZE: number = 5;  // Add this constant
