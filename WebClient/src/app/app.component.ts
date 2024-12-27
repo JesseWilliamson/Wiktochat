@@ -6,10 +6,11 @@ import { RoomSelectComponent } from "./room-select/room-select.component";
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, EaselComponent, RoomSelectComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.less'
 })
+
 export class AppComponent {
   title = 'wiktochat';
 }
