@@ -1,6 +1,5 @@
 package wiktochat.roomserver;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -17,11 +16,13 @@ import java.security.Principal;
 @CrossOrigin
 public class ChatController {
 
-  @Autowired
-  private ChatService chatService;
+  private final ChatService chatService;
+  private final SimpMessagingTemplate simpMessagingTemplate;
 
-  @Autowired
-  private SimpMessagingTemplate simpMessagingTemplate;
+  public ChatController(ChatService chatService, SimpMessagingTemplate simpMessagingTemplate) {
+    this.chatService = chatService;
+    this.simpMessagingTemplate = simpMessagingTemplate;
+  }
 
   @MessageMapping("/rooms/{roomId}/join")
   @SendToUser("/queue/responses")
