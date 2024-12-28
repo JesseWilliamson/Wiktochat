@@ -1,6 +1,5 @@
 package wiktochat.roomserver;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -23,10 +22,6 @@ public class ChatController {
 
   @Autowired
   private SimpMessagingTemplate simpMessagingTemplate;
-
-  @PostConstruct
-  public void init() {
-  }
 
   @MessageMapping("/rooms/{roomId}/join")
   @SendToUser("/queue/responses")
