@@ -8,9 +8,8 @@ describe('TrestleComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EaselComponent]
-    })
-    .compileComponents();
+      imports: [EaselComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(EaselComponent);
     component = fixture.componentInstance;

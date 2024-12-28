@@ -1,15 +1,11 @@
 import { Component } from '@angular/core';
-import {MessageComponent} from '../chat-message/message.component';
+import { MessageComponent } from '../chat-message/message.component';
 
 @Component({
   selector: 'app-message-feed',
   standalone: true,
-  imports: [
-    MessageComponent
-  ],
+  imports: [MessageComponent],
   templateUrl: './message-feed.component.html',
-  styleUrl: './message-feed.component.less'
+  styleUrl: './message-feed.component.less',
 })
-export class MessageFeedComponent {
-
-}
+export class MessageFeedComponent {}

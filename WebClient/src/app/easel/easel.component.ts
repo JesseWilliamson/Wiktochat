@@ -12,31 +12,30 @@ interface Point {
   standalone: true,
   imports: [FormsModule],
   templateUrl: './easel.component.html',
-  styleUrl: './easel.component.less'
+  styleUrl: './easel.component.less',
 })
 export class EaselComponent implements AfterViewInit {
-  private readonly CANVAS_WIDTH: number = 1200;  // Adjust size as needed
+  private readonly CANVAS_WIDTH: number = 1200; // Adjust size as needed
   private readonly CANVAS_HEIGHT: number = 600; // Adjust size as needed
-  private readonly PIXEL_SIZE: number = 5;  // Add this constant
+  private readonly PIXEL_SIZE: number = 5; // Add this constant
   private lastPos: Point | null = null;
   private grid: Int8Array[];
 
   @ViewChild('canvas') canvas!: ElementRef<HTMLCanvasElement>;
-  selectedColor = '#000000';  // Default color black
+  selectedColor = '#000000'; // Default color black
 
-  constructor(
-    private route: ActivatedRoute,
-  ) {
-    this.grid = new Array(this.CANVAS_WIDTH).fill(new Int8Array(this.CANVAS_HEIGHT))
+  constructor(private route: ActivatedRoute) {
+    this.grid = new Array(this.CANVAS_WIDTH).fill(
+      new Int8Array(this.CANVAS_HEIGHT),
+    );
     console.log(this.grid);
 
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       const roomId = params['id'];
       console.log('Room ID:', roomId);
-    })
+    });
   }
   private isDrawing = false;
-
 
   ngAfterViewInit() {
     console.log(this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
@@ -95,7 +94,7 @@ export class EaselComponent implements AfterViewInit {
     let y = p1.y;
 
     while (true) {
-      points.push({x, y});
+      points.push({ x, y });
 
       // If we've reached the end point, break
       if (x === p2.x && y === p2.y) break;
@@ -117,25 +116,29 @@ export class EaselComponent implements AfterViewInit {
 
   private clampPixel(x: number, y: number): Point {
     // Takes a pixel coordinate and returns the nearest cell
-    const xCell = Math.floor(x/this.PIXEL_SIZE)
-    const yCell = Math.floor(y/this.PIXEL_SIZE)
+    const xCell = Math.floor(x / this.PIXEL_SIZE);
+    const yCell = Math.floor(y / this.PIXEL_SIZE);
     // if either x or y cell is 0, print it and the original x and y
     if (xCell == 0 || yCell == 0) {
       console.log(x, y, xCell, yCell);
     }
-    return {x: xCell, y: yCell};
+    return { x: xCell, y: yCell };
   }
 
   private drawCell(x: number, y: number, ctx: CanvasRenderingContext2D): void {
     // Fills cell
     this.grid[x][y] = 1;
-    console.log(this.grid)
+    console.log(this.grid);
     ctx.fillStyle = this.selectedColor;
-    ctx.fillRect(this.PIXEL_SIZE * x, this.PIXEL_SIZE * y, this.PIXEL_SIZE, this.PIXEL_SIZE);
+    ctx.fillRect(
+      this.PIXEL_SIZE * x,
+      this.PIXEL_SIZE * y,
+      this.PIXEL_SIZE,
+      this.PIXEL_SIZE,
+    );
   }
 
   private draw(e: MouseEvent): void {
-
     if (!this.isDrawing) return;
 
     const canvas = this.canvas.nativeElement;
@@ -147,15 +150,16 @@ export class EaselComponent implements AfterViewInit {
     const y = e.clientY - rect.top;
 
     const clampedPosition = this.clampPixel(x, y);
-    if (clampedPosition != this.lastPos && this.lastPos != null){
-      const points: Point[] = this.interpolatePoints(this.lastPos, clampedPosition)
+    if (clampedPosition != this.lastPos && this.lastPos != null) {
+      const points: Point[] = this.interpolatePoints(
+        this.lastPos,
+        clampedPosition,
+      );
       for (const point of points) {
         this.drawCell(point.x, point.y, ctx);
       }
     }
     this.lastPos = clampedPosition;
-
-
 
     this.drawCell(this.clampPixel(x, y).x, this.clampPixel(x, y).y, ctx);
   }
