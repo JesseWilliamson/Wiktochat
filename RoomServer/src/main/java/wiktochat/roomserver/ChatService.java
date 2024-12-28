@@ -1,27 +1,26 @@
 package wiktochat.roomserver;
 
-import java.security.Principal;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 public class ChatService {
-  @Autowired
-  private SimpMessagingTemplate messagingTemplate;
-
   private final ConcurrentHashMap<String, ChatRoom> rooms = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
   private final RoomManager roomManager = new RoomManager();
+  @Autowired
+  private SimpMessagingTemplate messagingTemplate;
 
   public String createRoom(Principal principal) {
     String roomId = generateRoomId();
     ChatRoom room = new ChatRoom(roomId);
     rooms.put(roomId, room);
-    System.out.println("Created room " + roomId + ". Total rooms: " + rooms.toString());
+    System.out.println("Created room " + roomId + ". Total rooms: " + rooms);
     return roomId;
   }
 

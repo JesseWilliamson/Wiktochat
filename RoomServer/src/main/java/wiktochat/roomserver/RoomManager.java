@@ -6,8 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RoomManager {
-  private record UserRoom(Principal principal, String roomId) {}
-
   private final HashSet<UserRoom> relationships = new HashSet<>();
 
   public void addUserToRoom(Principal principal, String roomId) {
@@ -34,5 +32,8 @@ public class RoomManager {
 
   public boolean isUserInRoom(Principal principal, String roomId) {
     return relationships.contains(new UserRoom(principal, roomId));
+  }
+
+  private record UserRoom(Principal principal, String roomId) {
   }
 }
