@@ -51,8 +51,8 @@ export class ChatMessageHandlerService {
           const effectRef = effect(() => {
             if (this._isConnected()) {
               console.log('resolved withpromise effect');
-              return originalMethod.apply(this, args);
               effectRef.destroy();
+              return originalMethod.apply(this, args);
             }
           });
         }
