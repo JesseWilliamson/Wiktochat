@@ -13,6 +13,7 @@ import SockJS from 'sockjs-client';
 export class ChatMessageHandlerService {
   private stompClient: Client;
   private _chatMessages = signal<ChatMessage[]>([]);
+  public chatMessages = this._chatMessages.asReadonly();
   private _isConnected = signal<boolean>(false);
   public isConnected = this._isConnected.asReadonly();
   private _username = signal<string>("");
@@ -33,6 +34,9 @@ export class ChatMessageHandlerService {
       },
     });
     this.stompClient.activate();
+    effect(() => {
+      console.log(this.chatMessages());
+    });
   }
 
   private static waitForConnection() {
@@ -55,7 +59,6 @@ export class ChatMessageHandlerService {
       };
     }
   }
-
 
   public createRoom(): Promise<CreateRoomResponse> {
     return new Promise((resolve) => {
@@ -98,13 +101,8 @@ export class ChatMessageHandlerService {
       (message) => {
         const messageContent = JSON.parse(message.body);
         console.log("Catchall", messageContent);
-        // const chatMessage = message.body as ChatMessage;
-        // this.chatMessages.update(
-        //   (chatMessages) => {
-        //     chatMessages.push(chatMessage);
-        //     return chatMessages;
-        //   }
-        // )
+        const chatMessage = messageContent as ChatMessage;
+        this._chatMessages.update(messages => [...messages, chatMessage]);
       }
     );
   }
