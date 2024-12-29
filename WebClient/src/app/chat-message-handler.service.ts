@@ -2,7 +2,6 @@ import { Injectable, signal, effect } from '@angular/core';
 import {Client, StompSubscription} from '@stomp/stompjs';
 import {
   ChatMessage,
-  RoomState,
   JoinRoomResponse,
   CreateRoomResponse,
 } from './models/message.types';
