@@ -60,6 +60,7 @@ export class ChatMessageHandlerService {
     }
   }
 
+  @ChatMessageHandlerService.waitForConnection()
   public createRoom(): Promise<CreateRoomResponse> {
     return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe(
