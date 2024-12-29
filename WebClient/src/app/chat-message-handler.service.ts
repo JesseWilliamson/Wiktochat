@@ -13,10 +13,13 @@ import SockJS from 'sockjs-client';
 })
 export class ChatMessageHandlerService {
   private stompClient: Client;
-  private chatMessages = signal<ChatMessage[]>([]);
-  private roomState = signal<RoomState>({
-    connected: false,
-  });
+  private _chatMessages = signal<ChatMessage[]>([]);
+  private _isConnected = signal<boolean>(false);
+  public isConnected = this._isConnected.asReadonly();
+  private _username = signal<string>("");
+  public username = this._username.asReadonly();
+  private _roomId = signal<string>("");
+  public roomId = this._roomId.asReadonly();
   private messageSubscription: StompSubscription | undefined;
 
   constructor() {
@@ -24,32 +27,13 @@ export class ChatMessageHandlerService {
       webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
       onConnect: () => {
         console.log('Connected to WebSocket');
-        this.roomState.update((state) => ({
-          ...state,
-          connected: true,
-        }));
+        this._isConnected.set(true);
       },
       onDisconnect: () => {
-        this.roomState.update((state) => ({
-          ...state,
-          connected: false,
-        }));
+        this._isConnected.set(false);
       },
     });
     this.stompClient.activate();
-  }
-
-  public setRoomStateId(roomId: string) {
-    this.roomState.update(
-      (roomState) => {
-        roomState.currentRoom = roomId;
-        return roomState;
-      }
-    )
-  }
-
-  public getRoomState() {
-    return this.roomState;
   }
 
   public createRoom(): Promise<CreateRoomResponse> {
@@ -62,7 +46,6 @@ export class ChatMessageHandlerService {
           resolve(response);
         },
       );
-
       this.stompClient.publish({
         destination: `/app/rooms/create`,
       });
@@ -79,7 +62,6 @@ export class ChatMessageHandlerService {
           resolve(response);
         },
       );
-
       this.stompClient.publish({
         destination: `/app/rooms/${roomKey}/join`,
       });
