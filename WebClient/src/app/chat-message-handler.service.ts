@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, effect } from '@angular/core';
 import {Client, StompSubscription} from '@stomp/stompjs';
 import {
   ChatMessage,
@@ -69,6 +69,20 @@ export class ChatMessageHandlerService {
   }
 
   public subscribeToRoom(roomKey: string): void {
+    if (this.isConnected()) {
+      this.performSubscription(roomKey);
+    } else {
+      console.log('Not connected, waiting for connection...');
+      const effectRef = effect(() => {
+        if (this.isConnected()) {
+          this.performSubscription(roomKey);
+          effectRef.destroy();
+        }
+      });
+    }
+  }
+
+  private performSubscription(roomKey: string): void {
     console.log('Subscribed to Room', roomKey);
     this.messageSubscription = this.stompClient.subscribe(
       `/rooms/${roomKey}/messages`,
@@ -83,6 +97,6 @@ export class ChatMessageHandlerService {
         //   }
         // )
       }
-    )
+    );
   }
 }

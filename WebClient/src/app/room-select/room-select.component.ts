@@ -22,18 +22,14 @@ export class RoomSelectComponent {
     const response = await this.chatService.createRoom();
     console.log(response);
     if (response.success) {
-      this.chatService.setRoomStateId(response.roomId);
       await this.router.navigate(['/chat', response.roomId]);
     }
-    this.chatService.setRoomStateId(response.roomId);
-    this.chatService.subscribeToRoom(response.roomId);
   }
 
   public async joinRoom() {
     const response = await this.chatService.joinRoom(this.roomKey);
     console.log(response);
     if (response.success) {
-      this.chatService.setRoomStateId(this.roomKey);
       await this.router.navigate(['/chat', this.roomKey]);
     }
   }
