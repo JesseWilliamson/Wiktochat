@@ -26,7 +26,7 @@ public class ChatController {
 
   @MessageMapping("/rooms/{roomId}/join")
   @SendToUser("/queue/responses")
-  public JoinRoomResponse handleJoinRoom(@DestinationVariable String roomId, StompHeaderAccessor headerAccessor, Principal principal) {
+  public JoinRoomResponse handleJoinRoom(@DestinationVariable String roomId, Principal principal) {
     System.out.println("Join attempt - principal: " + principal.getName() + " Room: " + roomId);
 
     try {
@@ -47,7 +47,7 @@ public class ChatController {
 
   @MessageMapping("/rooms/create")
   @SendToUser("/queue/responses")
-  public CreateRoomResponse handleCreateRoom(StompHeaderAccessor headerAccessor, Principal principal) {
+  public CreateRoomResponse handleCreateRoom(Principal principal) {
     System.out.println("Room create attempt - principal: " + principal);
 
     try {

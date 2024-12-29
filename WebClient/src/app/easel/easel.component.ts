@@ -28,17 +28,10 @@ export class EaselComponent implements AfterViewInit {
     this.grid = new Array(this.CANVAS_WIDTH).fill(
       new Int8Array(this.CANVAS_HEIGHT),
     );
-    console.log(this.grid);
-
-    this.route.params.subscribe((params) => {
-      const roomId = params['id'];
-      console.log('Room ID:', roomId);
-    });
   }
   private isDrawing = false;
 
   ngAfterViewInit() {
-    console.log(this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
     const canvas = this.canvas.nativeElement;
     this.drawGrid(canvas);
 
@@ -118,17 +111,12 @@ export class EaselComponent implements AfterViewInit {
     // Takes a pixel coordinate and returns the nearest cell
     const xCell = Math.floor(x / this.PIXEL_SIZE);
     const yCell = Math.floor(y / this.PIXEL_SIZE);
-    // if either x or y cell is 0, print it and the original x and y
-    if (xCell == 0 || yCell == 0) {
-      console.log(x, y, xCell, yCell);
-    }
     return { x: xCell, y: yCell };
   }
 
   private drawCell(x: number, y: number, ctx: CanvasRenderingContext2D): void {
     // Fills cell
     this.grid[x][y] = 1;
-    console.log(this.grid);
     ctx.fillStyle = this.selectedColor;
     ctx.fillRect(
       this.PIXEL_SIZE * x,

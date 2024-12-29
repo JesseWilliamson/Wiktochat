@@ -1,5 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Client } from '@stomp/stompjs';
+import { Injectable, signal } from '@angular/core';
+import {Client, StompSubscription} from '@stomp/stompjs';
 import {
   ChatMessage,
   RoomState,
@@ -11,15 +11,13 @@ import SockJS from 'sockjs-client';
 @Injectable({
   providedIn: 'root',
 })
-export class MessageHandlerService {
+export class ChatMessageHandlerService {
   private stompClient: Client;
-  private messages = signal<ChatMessage[]>([]);
+  private chatMessages = signal<ChatMessage[]>([]);
   private roomState = signal<RoomState>({
     connected: false,
   });
-
-  public readonly currentRoom = computed(() => this.roomState().currentRoom);
-  public readonly isConnected = computed(() => this.roomState().connected);
+  private messageSubscription: StompSubscription | undefined;
 
   constructor() {
     this.stompClient = new Client({
@@ -39,6 +37,19 @@ export class MessageHandlerService {
       },
     });
     this.stompClient.activate();
+  }
+
+  public setRoomStateId(roomId: string) {
+    this.roomState.update(
+      (roomState) => {
+        roomState.currentRoom = roomId;
+        return roomState;
+      }
+    )
+  }
+
+  public getRoomState() {
+    return this.roomState;
   }
 
   public createRoom(): Promise<CreateRoomResponse> {
@@ -73,5 +84,23 @@ export class MessageHandlerService {
         destination: `/app/rooms/${roomKey}/join`,
       });
     });
+  }
+
+  public subscribeToRoom(roomKey: string): void {
+    console.log('Subscribed to Room', roomKey);
+    this.messageSubscription = this.stompClient.subscribe(
+      `/rooms/${roomKey}/messages`,
+      (message) => {
+        const messageContent = JSON.parse(message.body);
+        console.log("Catchall", messageContent);
+        // const chatMessage = message.body as ChatMessage;
+        // this.chatMessages.update(
+        //   (chatMessages) => {
+        //     chatMessages.push(chatMessage);
+        //     return chatMessages;
+        //   }
+        // )
+      }
+    )
   }
 }
