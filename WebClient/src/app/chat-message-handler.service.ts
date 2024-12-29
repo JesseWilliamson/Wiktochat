@@ -35,6 +35,28 @@ export class ChatMessageHandlerService {
     this.stompClient.activate();
   }
 
+  private static waitForConnection() {
+    return function (target: ChatMessageHandlerService, propertyKey: string, descriptor: PropertyDescriptor) {
+      const originalMethod = descriptor.value;
+
+      descriptor.value = function(this: ChatMessageHandlerService, ...args: never[]) {
+        if (this._isConnected()) {
+          console.log('No effect needed in withpromise');
+          return originalMethod.apply(this, args);
+        } else {
+          const effectRef = effect(() => {
+            if (this._isConnected()) {
+              console.log('resolved withpromise effect');
+              return originalMethod.apply(this, args);
+              effectRef.destroy();
+            }
+          });
+        }
+      };
+    }
+  }
+
+
   public createRoom(): Promise<CreateRoomResponse> {
     return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe(
@@ -51,6 +73,7 @@ export class ChatMessageHandlerService {
     });
   }
 
+  @ChatMessageHandlerService.waitForConnection()
   public joinRoom(roomKey: string): Promise<JoinRoomResponse> {
     return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe(
@@ -67,21 +90,8 @@ export class ChatMessageHandlerService {
     });
   }
 
+  @ChatMessageHandlerService.waitForConnection()
   public subscribeToRoom(roomKey: string): void {
-    if (this.isConnected()) {
-      this.performSubscription(roomKey);
-    } else {
-      console.log('Not connected, waiting for connection...');
-      const effectRef = effect(() => {
-        if (this.isConnected()) {
-          this.performSubscription(roomKey);
-          effectRef.destroy();
-        }
-      });
-    }
-  }
-
-  private performSubscription(roomKey: string): void {
     console.log('Subscribed to Room', roomKey);
     this.messageSubscription = this.stompClient.subscribe(
       `/rooms/${roomKey}/messages`,
