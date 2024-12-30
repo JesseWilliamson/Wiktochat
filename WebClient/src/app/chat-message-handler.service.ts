@@ -32,6 +32,9 @@ export class ChatMessageHandlerService {
       onDisconnect: () => {
         this._isConnected.set(false);
       },
+      debug: function(str) {
+        console.log(str);
+      }
     });
     this.stompClient.activate();
     effect(() => {
