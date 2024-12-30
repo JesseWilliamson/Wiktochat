@@ -5,7 +5,6 @@ import {
   JoinRoomResponse,
   CreateRoomResponse,
 } from './models/message.types';
-import SockJS from 'sockjs-client';
 
 @Injectable({
   providedIn: 'root',
@@ -57,7 +56,7 @@ export class ChatMessageHandlerService {
     });
   }
 
-  public async createRoom(): Promise<CreateRoomResponse> {
+  public createRoom(): Promise<CreateRoomResponse> {
     return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe(
         '/user/queue/responses',
@@ -74,7 +73,7 @@ export class ChatMessageHandlerService {
     });
   }
 
-  public async joinRoom(roomKey: string): Promise<JoinRoomResponse> {
+  public joinRoom(roomKey: string): Promise<JoinRoomResponse> {
     return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe(
         '/user/queue/responses',
@@ -89,6 +88,7 @@ export class ChatMessageHandlerService {
       });
     });
   }
+
   public subscribeToUser(): void {
     this.messageSubscription = this.stompClient.subscribe(
       '/user/queue/responses',
