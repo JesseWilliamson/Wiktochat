@@ -5,6 +5,7 @@ import {
   JoinRoomResponse,
   CreateRoomResponse,
 } from './models/message.types';
+import SockJS from 'sockjs-client';
 
 @Injectable({
   providedIn: 'root',
@@ -23,7 +24,7 @@ export class ChatMessageHandlerService {
 
   constructor() {
     this.stompClient = new Client({
-      brokerURL: 'ws://localhost:8080/ws',
+      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
       onConnect: () => {
         console.log('Connected to WebSocket');
         this._isConnected.set(true);
@@ -38,29 +39,22 @@ export class ChatMessageHandlerService {
     });
   }
 
-  private static waitForConnection() {
-    return function (target: ChatMessageHandlerService, propertyKey: string, descriptor: PropertyDescriptor) {
-      const originalMethod = descriptor.value;
-
-      descriptor.value = function(this: ChatMessageHandlerService, ...args: never[]) {
+  // TODO: I'm not sure this polling like this is the best way to handle waiting for connection
+  public awaitConnection(): Promise<boolean> {
+    return new Promise((resolve) => {
+      const checkConnection = () => {
         if (this._isConnected()) {
-          console.log('No effect needed in withpromise');
-          return originalMethod.apply(this, args);
+          resolve(true);
         } else {
-          const effectRef = effect(() => {
-            if (this._isConnected()) {
-              console.log('resolved withpromise effect');
-              effectRef.destroy();
-              return originalMethod.apply(this, args);
-            }
-          });
+          // TODO: Make a config file for these kinds of values
+          setTimeout(checkConnection, 100);
         }
       };
-    }
+      checkConnection();
+    });
   }
 
-  @ChatMessageHandlerService.waitForConnection()
-  public createRoom(): Promise<CreateRoomResponse> {
+  public async createRoom(): Promise<CreateRoomResponse> {
     return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe(
         '/user/queue/responses',
@@ -73,11 +67,11 @@ export class ChatMessageHandlerService {
       this.stompClient.publish({
         destination: `/app/rooms/create`,
       });
+      console.log('published')
     });
   }
 
-  @ChatMessageHandlerService.waitForConnection()
-  public joinRoom(roomKey: string): Promise<JoinRoomResponse> {
+  public async joinRoom(roomKey: string): Promise<JoinRoomResponse> {
     return new Promise((resolve) => {
       const subscription = this.stompClient.subscribe(
         '/user/queue/responses',
@@ -92,8 +86,17 @@ export class ChatMessageHandlerService {
       });
     });
   }
+  public subscribeToUser(): void {
+    this.messageSubscription = this.stompClient.subscribe(
+      '/user/queue/responses',
+      (message) => {
+        const response = JSON.parse(message.body);
+        console.log("Catchall User Queue: ", response);
+      }
+    );
+    console.log('subscribed to user')
+  }
 
-  @ChatMessageHandlerService.waitForConnection()
   public subscribeToRoom(roomKey: string): void {
     console.log('Subscribed to Room', roomKey);
     this.messageSubscription = this.stompClient.subscribe(
