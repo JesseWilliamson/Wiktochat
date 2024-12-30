@@ -24,7 +24,7 @@ export class ChatMessageHandlerService {
 
   constructor() {
     this.stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      brokerURL: 'http://localhost:8080/ws',
       onConnect: () => {
         console.log('Connected to WebSocket');
         this._isConnected.set(true);
