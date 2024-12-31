@@ -33,7 +33,7 @@ public class ChatController {
   @MessageMapping("/rooms/{roomId}/join")
   @SendToUser("/queue/responses")
   public JoinRoomResponse handleJoinRoom(@DestinationVariable String roomId, Principal principal) {
-    String sessionId = principal.toString();
+    String sessionId = principal.getName();
     System.out.println("Join attempt - sessionId: " + sessionId + " Room: " + roomId);
 
     try {
@@ -55,7 +55,7 @@ public class ChatController {
   @MessageMapping("/rooms/create")
   @SendToUser("/queue/responses")
   public CreateRoomResponse handleCreateRoom(Principal principal) {
-    String sessionId = principal.toString();
+    String sessionId = principal.getName();
     System.out.println("Room create attempt - sessionId: " + sessionId);
 
     try {
