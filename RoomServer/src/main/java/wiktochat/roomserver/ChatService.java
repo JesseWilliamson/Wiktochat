@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,7 +15,7 @@ public class ChatService {
   @Autowired
   private SimpMessagingTemplate messagingTemplate;
 
-  public String createRoom(Principal principal) {
+  public String createRoom(String sessionId) {
     String roomId = generateRoomId();
     ChatRoom room = new ChatRoom(roomId);
     rooms.put(roomId, room);
@@ -24,11 +23,11 @@ public class ChatService {
     return roomId;
   }
 
-  public void joinRoom(Principal principal, String roomId) {
-    System.out.println("ChatService.joinRoom - Principal: " + principal.getName() + " Room: " + roomId);
+  public void joinRoom(String sessionId, String roomId) {
+    System.out.println("ChatService.joinRoom - SessionId: " + sessionId + " Room: " + roomId);
     ChatRoom room = rooms.get(roomId);
     if (room != null) {
-      roomManager.addUserToRoom(principal, roomId);
+      roomManager.addUserToRoom(sessionId, roomId);
       System.out.println("Current users in " + roomId + ": " + roomManager.getUsersInRoom(roomId));
     } else {
       System.out.println("Room not found: " + roomId);
@@ -36,17 +35,17 @@ public class ChatService {
     }
   }
 
-  public void sendMessage(Principal principal, String roomId, String message) {
-    if (!roomManager.isUserInRoom(principal, roomId)) {
-      System.out.println("User " + principal + " tried to send a message to a room (" + roomId + ") which they aren't in!");
+  public void sendMessage(String sessionId, String roomId, String message) {
+    if (!roomManager.isUserInRoom(sessionId, roomId)) {
+      System.out.println("User " + sessionId + " tried to send a message to a room (" + roomId + ") which they aren't in!");
       System.out.println("Users in " + roomId + " are " + roomManager.getUsersInRoom(roomId));
       return;
     }
     ChatRoom room = rooms.get(roomId);
-    ChatMessage chatMessage = new ChatMessage(principal, message);
+    ChatMessage chatMessage = new ChatMessage(sessionId, message);
     room.addMessage(chatMessage);
     // Broadcast the message to all users subscribed to this room's topic
-    messagingTemplate.convertAndSend(String.format("rooms/%s/messages", roomId), chatMessage);
+    messagingTemplate.convertAndSend(String.format("/rooms/%s/messages", roomId), chatMessage);
   }
 
   public ChatRoom getRoomData(String roomId) {

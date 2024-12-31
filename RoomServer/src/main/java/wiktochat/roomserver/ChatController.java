@@ -1,16 +1,17 @@
 package wiktochat.roomserver;
 
+import java.security.Principal;
+
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.security.Principal;
 
 @RestController
 @CrossOrigin
@@ -24,13 +25,19 @@ public class ChatController {
     this.simpMessagingTemplate = simpMessagingTemplate;
   }
 
+  @PostMapping
+  public void createRoom(@RequestBody String sessionId) {
+    chatService.createRoom(sessionId);
+  }
+
   @MessageMapping("/rooms/{roomId}/join")
   @SendToUser("/queue/responses")
   public JoinRoomResponse handleJoinRoom(@DestinationVariable String roomId, Principal principal) {
-    System.out.println("Join attempt - principal: " + principal.getName() + " Room: " + roomId);
+    String sessionId = principal.toString();
+    System.out.println("Join attempt - sessionId: " + sessionId + " Room: " + roomId);
 
     try {
-      chatService.joinRoom(principal, roomId);
+      chatService.joinRoom(sessionId, roomId);
       System.out.println("Broadcasting join message to room: " + roomId);
       simpMessagingTemplate.convertAndSend("/rooms/" + roomId + "/messages",
         new ChatMessage("User joined the room"));
@@ -48,11 +55,12 @@ public class ChatController {
   @MessageMapping("/rooms/create")
   @SendToUser("/queue/responses")
   public CreateRoomResponse handleCreateRoom(Principal principal) {
-    System.out.println("Room create attempt - principal: " + principal);
+    String sessionId = principal.toString();
+    System.out.println("Room create attempt - sessionId: " + sessionId);
 
     try {
-      String roomId = chatService.createRoom(principal);
-      System.out.println("Room created: " + roomId + " by " + principal.getName());
+      String roomId = chatService.createRoom(sessionId);
+      System.out.println("Room created: " + roomId + " by " + sessionId);
       return new CreateRoomResponse(true, "Room created", roomId);
     } catch (Exception e) {
       return new CreateRoomResponse(false, "Failed to create room: " + e.getMessage(), null);

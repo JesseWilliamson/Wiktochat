@@ -13,7 +13,7 @@ public class ChatRoom {
   }
 
   public void addMessage(ChatMessage message) {
-    System.out.println("ChatRoom.addMessage - Message: " + message + " from " + message.getSender());
+    System.out.println("ChatRoom.addMessage - Message: " + message + " from " + message.getSenderSessionId());
     messages.add(message);
   }
 

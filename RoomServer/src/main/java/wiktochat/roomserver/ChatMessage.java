@@ -1,13 +1,11 @@
 package wiktochat.roomserver;
 
-import java.security.Principal;
-
 public class ChatMessage {
-  private Principal sender;
+  private String senderSessionId;
   private String content;
 
-  public ChatMessage(Principal sender, String content) {
-    this.sender = sender;
+  public ChatMessage(String sender, String content) {
+    this.senderSessionId = sender;
     this.content = content;
   }
 
@@ -15,12 +13,12 @@ public class ChatMessage {
     this.content = content;
   }
 
-  public Principal getSender() {
-    return sender;
+  public String getSenderSessionId() {
+    return senderSessionId;
   }
 
-  public void setSender(Principal sender) {
-    this.sender = sender;
+  public void setSenderSessionId(String sender) {
+    this.senderSessionId = sender;
   }
 
   public String getContent() {
@@ -34,7 +32,7 @@ public class ChatMessage {
   @Override
   public String toString() {
     return "ChatMessage{" +
-      "sender='" + sender + '\'' +
+      "sender='" + senderSessionId + '\'' +
       ", content='" + content + '\'' +
       '}';
   }
