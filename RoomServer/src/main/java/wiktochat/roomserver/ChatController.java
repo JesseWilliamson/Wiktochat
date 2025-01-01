@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.rsocket.annotation.ConnectMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -37,6 +38,8 @@ public class ChatController {
         .body(new CreateRoomResponse(false, "Failed to create room: " + e.getMessage(), null));
     }
   }
+
+  @PostMapping("/rooms/{roomId}/members")
 
   @MessageMapping("/rooms/{roomId}/join")
   @SendToUser("/queue/responses")

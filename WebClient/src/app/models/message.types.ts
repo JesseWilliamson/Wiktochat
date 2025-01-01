@@ -15,12 +15,12 @@ export interface RoomState {
   connected: boolean;
 }
 
-export interface CreateRoomResponse {
-  success: boolean;
-  roomId?: string;
-  message?: string;
+export interface JoinRoomRequest {
+  sessionId: string;
+  roomId: string;
 }
 
-export interface JoinRoomResponse {
-  success: boolean;
+export interface CreateRoomResponse {
+  roomId?: string;
+  message?: string;
 }
