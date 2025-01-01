@@ -41,9 +41,10 @@ public class ChatController {
   }
 
   @PostMapping("/rooms/{roomId}/members")
-  public ResponseEntity<Void> joinRoom(@RequestBody String sessionId, @DestinationVariable String roomId) {
+  public ResponseEntity<Void> joinRoom(@RequestBody String sessionId, @PathVariable String roomId) {
     try {
       System.out.println("Join attempt - sessionId: " + sessionId + " Room: " + roomId);
+      chatService.joinRoom(sessionId, roomId);
       return ResponseEntity.ok().build();
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
