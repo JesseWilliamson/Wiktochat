@@ -2,6 +2,7 @@ package wiktochat.roomserver;
 
 import java.security.Principal;
 
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -40,42 +41,19 @@ public class ChatController {
   }
 
   @PostMapping("/rooms/{roomId}/members")
-
-  @MessageMapping("/rooms/{roomId}/join")
-  @SendToUser("/queue/responses")
-  public JoinRoomResponse handleJoinRoom(@DestinationVariable String roomId, Principal principal) {
-    String sessionId = principal.getName();
-    System.out.println("Join attempt - sessionId: " + sessionId + " Room: " + roomId);
-
+  public ResponseEntity<Void> joinRoom(@RequestBody String sessionId, @DestinationVariable String roomId) {
     try {
-      chatService.joinRoom(sessionId, roomId);
-      System.out.println("Broadcasting join message to room: " + roomId);
-      simpMessagingTemplate.convertAndSend("/rooms/" + roomId + "/messages",
-        new ChatMessage("User joined the room"));
-      return new JoinRoomResponse(true, "Successfully joined room");
+      System.out.println("Join attempt - sessionId: " + sessionId + " Room: " + roomId);
+      return ResponseEntity.ok().build();
     } catch (Exception e) {
-      return new JoinRoomResponse(false, "Failed to join room: " + e.getMessage());
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
   }
+
 
   @GetMapping("/rooms/{roomId}/info")
   public ChatRoom getRoomData(@PathVariable String roomId) {
     return chatService.getRoomData(roomId);
-  }
-
-  @MessageMapping("/rooms/create")
-  @SendToUser("/queue/responses")
-  public CreateRoomResponse handleCreateRoom(Principal principal) {
-    String sessionId = principal.getName();
-    System.out.println("Room create attempt - sessionId: " + sessionId);
-
-    try {
-      String roomId = chatService.createRoom(sessionId);
-      System.out.println("Room created: " + roomId + " by " + sessionId);
-      return new CreateRoomResponse(true, "Room created", roomId);
-    } catch (Exception e) {
-      return new CreateRoomResponse(false, "Failed to create room: " + e.getMessage(), null);
-    }
   }
 
 //    @MessageMapping("/rooms/{roomId}/messages")

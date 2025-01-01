@@ -21,6 +21,7 @@ export class ChatComponent {
     console.log("roomId ", roomId);
     if (roomId) {
       try {
+        this.chatService.joinRoom(roomId);
         this.chatService.subscribeToRoom(roomId);
       } catch (error) {
         console.error('Failed to subscribe to room:', error);

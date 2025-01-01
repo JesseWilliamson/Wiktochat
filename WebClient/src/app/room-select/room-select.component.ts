@@ -11,7 +11,7 @@ import { ChatMessageHandlerService } from '../chat-message-handler.service';
   styleUrl: './room-select.component.less',
 })
 export class RoomSelectComponent {
-  protected roomKey = '';
+  protected roomId = '';
 
   constructor(
     private router: Router,
@@ -19,34 +19,16 @@ export class RoomSelectComponent {
   ) {}
 
   public async createRoom() {
-    this.chatService.createRoom((roomid) => {
-      if (roomid) {
-        this.router.navigate(['/chat', roomid]);
+    this.chatService.createRoom((roomId) => {
+      if (roomId) {
+        this.router.navigate(['/chat', roomId]);
       }
     });
-    // const response = await this.chatService.createRoom();
-    // console.log(response);
-    // if (response.success) {
-    //   await this.router.navigate(['/chat', response.roomId]);
-    // }
   }
 
   public async joinRoom() {
-    //   try {
-    //     const response = await this.chatService.joinRoom(this.roomKey);
-    //     console.log(response);
-    //     if (response.success) {
-    //       await this.router.navigate(['/chat', this.roomKey]);
-    //     }
-    //   } catch (error) {
-    //     if (error instanceof Error && error.message === 'Already joining a room') {
-    //       console.warn('Please wait, already joining a room');
-    //       // Show user feedback that they should wait
-    //     } else {
-    //       console.error('Error joining room:', error);
-    //       // Show general error message to user
-    //     }
-    //   }
-    // }
+    this.chatService.joinRoom(this.roomId, ()=> {
+      this.router.navigate(['/chat', this.roomId])
+    });
   }
 }

@@ -3,11 +3,8 @@ import { Client, StompSubscription } from '@stomp/stompjs';
 import {
   ChatMessage,
   CreateRoomResponse,
-  JoinRoomRequest
 } from './models/message.types';
 import { HttpClient } from '@angular/common/http';
-import { delay } from 'rxjs';
-
 @Injectable({
   providedIn: 'root',
 })
@@ -65,58 +62,21 @@ export class ChatMessageHandlerService {
     });
   }
 
-  // public joinRoom(roomKey: string): Promise<JoinRoomResponse> {
-  //   // Return early if already joining a room
-  //   if (this._isJoiningRoom()) {
-  //     return Promise.reject(new Error('Already joining a room'));
-  //   }
-  //
-  //   this._isJoiningRoom.set(true);
-  //
-  //   return new Promise((resolve, reject) => {
-  //     const subscription = this.stompClient.subscribe(
-  //       '/user/queue/responses',
-  //       (message) => {
-  //         const response = JSON.parse(message.body);
-  //         subscription.unsubscribe();
-  //         this._isJoiningRoom.set(false);
-  //         resolve(response);
-  //       },
-  //     );
-  //
-  //     this.stompClient.publish({
-  //       destination: `/app/rooms/${roomKey}/join`,
-  //     });
-  //   }).catch((error) => {
-  //     this._isJoiningRoom.set(false);
-  //     throw error;
-  //   });
-  // }
-
-  // public httpJoinRoom(
-  //   roomKey: string,
-  //   onSuccess?: (response: JoinRoomResponse) => void,
-  // ): void {
-  //   const body: JoinRoomRequest = {
-  //     sessionId: this.sessionId,
-  //     roomId: roomKey
-  //   };
-  //   this.http.post(`/rooms/${roomKey}/members`, body).subscribe({
-  //     next: (response) => {
-  //       if (response.success) {
-  //         console.log('Joined room:', response);
-  //         if (onSuccess) {
-  //           onSuccess(response);
-  //         }
-  //       } else {
-  //         console.error('Failed to join room');
-  //       }
-  //     },
-  //     error: (error) => {
-  //       console.error('Error joining room:', error);
-  //     },
-  //   });
-  // }
+  public joinRoom(
+    roomKey: string,
+    onSuccess?: () => void,
+  ): void {
+    this.http.post(`/rooms/${roomKey}/members`, this.sessionId).subscribe({
+      next: () => {
+        if (onSuccess) {
+          onSuccess();
+        }
+      },
+      error: (error) => {
+        console.error('Error joining room:', error);
+      },
+    });
+  }
 
   public createRoom(onSuccess?: (roomId: string | null) => void): void {
     // Return early if already creating a room
@@ -127,34 +87,19 @@ export class ChatMessageHandlerService {
 
     this._isCreatingRoom.set(true);
 
-    setTimeout(() => {
-      this.http.post<CreateRoomResponse>('/rooms', this.sessionId).subscribe({
-        next: (response) => {
-          console.log('Room created:', response.roomId);
-          if (onSuccess) {
-            onSuccess(response.roomId || null);
-          }
-          this._isCreatingRoom.set(false);
-        },
-        error: (error) => {
-          console.error('Error creating room:', error);
-          this._isCreatingRoom.set(false);
-        },
-      });
-    }, 1000)
-
-
-  }
-
-  public subscribeToUser(): void {
-    this.messageSubscription = this.stompClient.subscribe(
-      '/user/queue/responses',
-      (message) => {
-        const response = JSON.parse(message.body);
-        console.log('Catchall User Queue: ', response);
+    this.http.post<CreateRoomResponse>('/rooms', this.sessionId).subscribe({
+      next: (response) => {
+        console.log('Room created:', response.roomId);
+        if (onSuccess) {
+          onSuccess(response.roomId || null);
+        }
+        this._isCreatingRoom.set(false);
       },
-    );
-    console.log('subscribed to user');
+      error: (error) => {
+        console.error('Error creating room:', error);
+        this._isCreatingRoom.set(false);
+      },
+    });
   }
 
   public subscribeToRoom(roomKey: string): void {
