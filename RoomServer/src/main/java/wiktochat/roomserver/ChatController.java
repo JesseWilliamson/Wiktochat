@@ -2,6 +2,8 @@ package wiktochat.roomserver;
 
 import java.security.Principal;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -25,9 +27,15 @@ public class ChatController {
     this.simpMessagingTemplate = simpMessagingTemplate;
   }
 
-  @PostMapping
-  public void createRoom(@RequestBody String sessionId) {
-    chatService.createRoom(sessionId);
+  @PostMapping("/rooms")
+  public ResponseEntity<CreateRoomResponse> createRoom(@RequestBody String sessionId) {
+    try {
+      String roomId = chatService.createRoom(sessionId);
+      return ResponseEntity.ok(new CreateRoomResponse(true, "Room created", roomId));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(new CreateRoomResponse(false, "Failed to create room: " + e.getMessage(), null));
+    }
   }
 
   @MessageMapping("/rooms/{roomId}/join")

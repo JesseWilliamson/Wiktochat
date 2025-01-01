@@ -17,7 +17,8 @@ export interface RoomState {
 
 export interface CreateRoomResponse {
   success: boolean;
-  roomId: string;
+  roomId?: string;
+  message?: string;
 }
 
 export interface JoinRoomResponse {

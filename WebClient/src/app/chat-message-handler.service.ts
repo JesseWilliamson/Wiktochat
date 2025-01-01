@@ -5,6 +5,7 @@ import {
   JoinRoomResponse,
   CreateRoomResponse,
 } from './models/message.types';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
@@ -19,14 +20,19 @@ export class ChatMessageHandlerService {
   public username = this._username.asReadonly();
   private _roomId = signal<string>("");
   public roomId = this._roomId.asReadonly();
+  private sessionId = "";
   private messageSubscription: StompSubscription | undefined;
 
-  constructor() {
+  constructor(
+    private http: HttpClient,
+  ) {
     this.stompClient = new Client({
       brokerURL: 'http://localhost:8080/ws',
-      onConnect: () => {
+      onConnect: (header) => {
         console.log('Connected to WebSocket');
         this._isConnected.set(true);
+        console.log('got header', header.headers["user-name"]);
+        this.sessionId = header.headers["user-name"];
       },
       onDisconnect: () => {
         this._isConnected.set(false);
@@ -86,6 +92,22 @@ export class ChatMessageHandlerService {
       this.stompClient.publish({
         destination: `/app/rooms/${roomKey}/join`,
       });
+    });
+  }
+
+  public httpCreateRoom(): void {
+    this.http.post<CreateRoomResponse>('/rooms', this.sessionId).subscribe({
+        next: (response) => {
+            if (response.success) {
+                console.log("Room created:", response.roomId);
+                // Handle successful room creation
+            } else {
+                console.error("Failed to create room");
+            }
+        },
+        error: (error) => {
+            console.error("Error creating room:", error);
+        }
     });
   }
 

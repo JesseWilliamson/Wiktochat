@@ -19,11 +19,12 @@ export class RoomSelectComponent {
   ) {}
 
   public async createRoom() {
-    const response = await this.chatService.createRoom();
-    console.log(response);
-    if (response.success) {
-      await this.router.navigate(['/chat', response.roomId]);
-    }
+    this.chatService.httpCreateRoom();
+    // const response = await this.chatService.createRoom();
+    // console.log(response);
+    // if (response.success) {
+    //   await this.router.navigate(['/chat', response.roomId]);
+    // }
   }
 
   public async joinRoom() {
