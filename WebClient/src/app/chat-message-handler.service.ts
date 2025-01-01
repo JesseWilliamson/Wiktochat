@@ -95,12 +95,14 @@ export class ChatMessageHandlerService {
     });
   }
 
-  public httpCreateRoom(): void {
+  public httpCreateRoom(onSuccess?: (roomId: string | null) => void): void {
     this.http.post<CreateRoomResponse>('/rooms', this.sessionId).subscribe({
         next: (response) => {
             if (response.success) {
                 console.log("Room created:", response.roomId);
-                // Handle successful room creation
+                if (onSuccess) {
+                    onSuccess(response.roomId || null);
+                }
             } else {
                 console.error("Failed to create room");
             }
