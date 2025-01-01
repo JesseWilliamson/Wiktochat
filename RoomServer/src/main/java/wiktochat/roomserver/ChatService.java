@@ -26,13 +26,11 @@ public class ChatService {
   public void joinRoom(String sessionId, String roomId) {
     System.out.println("ChatService.joinRoom - SessionId: " + sessionId + " Room: " + roomId);
     ChatRoom room = rooms.get(roomId);
-    if (room != null) {
-      roomManager.addUserToRoom(sessionId, roomId);
-      System.out.println("Current users in " + roomId + ": " + roomManager.getUsersInRoom(roomId));
-    } else {
-      System.out.println("Room not found: " + roomId);
-      throw new RuntimeException("Room not found");
+    if (room == null) {
+        throw new RoomNotFoundException("Room " + roomId + " does not exist");
     }
+    roomManager.addUserToRoom(sessionId, roomId);
+    System.out.println("Current users in " + roomId + ": " + roomManager.getUsersInRoom(roomId));
   }
 
   public void sendMessage(String sessionId, String roomId, String message) {
