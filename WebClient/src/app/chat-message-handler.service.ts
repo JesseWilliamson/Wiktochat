@@ -3,7 +3,8 @@ import { Client, StompSubscription } from '@stomp/stompjs';
 import {
   ChatMessage,
   CreateRoomResponse,
-} from './models/message.types';
+  GridMessage,
+} from './models/types';
 import { HttpClient } from '@angular/common/http';
 @Injectable({
   providedIn: 'root',
@@ -113,5 +114,23 @@ export class ChatMessageHandlerService {
         this._chatMessages.update((messages) => [...messages, chatMessage]);
       },
     );
+  }
+
+  sendGrid(grid: string[][]): void {
+    if (!this.stompClient || !this.stompClient.connected) {
+      console.error('Not connected to WebSocket');
+      return;
+    }
+
+    const gridMessage: GridMessage = {
+      roomId: this.roomId(),
+      grid,
+      timestamp: new Date()
+    };
+
+    this.stompClient.publish({
+      destination: `/app/rooms/${this.roomId()}/grid`,
+      body: JSON.stringify(gridMessage)
+    });
   }
 }

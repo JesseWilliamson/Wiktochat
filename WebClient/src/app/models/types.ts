@@ -24,3 +24,16 @@ export interface CreateRoomResponse {
   roomId?: string;
   message?: string;
 }
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface GridMessage {
+  roomId: string;
+  grid: string[][];
+  timestamp?: Date;
+}
+
+
