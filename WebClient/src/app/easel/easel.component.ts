@@ -23,6 +23,6 @@ export class EaselComponent {
 
   sendGrid() {
     const gridData = this.canvas.getGrid();
-    this.chatService.sendGrid(gridData);
+    this.chatService.sendGridMessage(gridData);
   }
 }

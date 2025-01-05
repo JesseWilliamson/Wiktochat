@@ -115,6 +115,25 @@ export class ChatMessageHandlerService {
     });
   }
 
+  public sendGridMessage(
+    gridMessage: string[][],
+  ): void {
+    const payload = {
+      grid: gridMessage,
+      senderSessionId: this.sessionId,
+      timeStamp: new Date()
+    };
+
+    this.http.post(`/rooms/${this.roomId()}/messages`, payload).subscribe({
+      next: () => {
+        console.log('Grid message sent successfully');
+      },
+      error: (error) => {
+        console.error('Error sending message:', error);
+      },
+    });
+  }
+
   public subscribeToRoom(roomKey: string): void {
     console.log('Subscribed to Room', roomKey);
     this.messageSubscription = this.stompClient.subscribe(
@@ -128,39 +147,39 @@ export class ChatMessageHandlerService {
     );
   }
 
-  sendGrid(grid: string[][]): void {
-    if (!this.stompClient || !this.stompClient.connected) {
-      console.error('Not connected to WebSocket');
-      return;
-    }
+  // sendGrid(grid: string[][]): void {
+  //   if (!this.stompClient || !this.stompClient.connected) {
+  //     console.error('Not connected to WebSocket');
+  //     return;
+  //   }
 
-    const gridMessage: GridMessage = {
-      grid: grid,
-      senderSessionId: this.sessionId,
-      timeStamp: new Date(),
-    };
+  //   const gridMessage: GridMessage = {
+  //     grid: grid,
+  //     senderSessionId: this.sessionId,
+  //     timeStamp: new Date(),
+  //   };
 
-    console.log('Sending grid', gridMessage);
+  //   console.log('Sending grid', gridMessage);
 
-    const roomId = this.roomId();
-    if (roomId) {
-      this.stompClient.publish({
-        destination: `/rooms/${roomId}/messages`,
-        body: JSON.stringify(gridMessage)
-      });
-    } else {
-      console.error('Not connected to a room');
-    }
-  }
+  //   const roomId = this.roomId();
+  //   if (roomId) {
+  //     this.stompClient.publish({
+  //       destination: `/rooms/${roomId}/messages`,
+  //       body: JSON.stringify(gridMessage)
+  //     });
+  //   } else {
+  //     console.error('Not connected to a room');
+  //   }
+  // }
 
-  public sendMessage(roomId: string, message: string): void {
-    if (this.stompClient && this.stompClient.connected) {
-      this.stompClient.publish({
-        destination: `/rooms/${roomId}/messages`,
-        body: message
-      });
-    } else {
-      console.error('Not connected to WebSocket');
-    }
-  }
+  // public sendMessage(roomId: string, message: string): void {
+  //   if (this.stompClient && this.stompClient.connected) {
+  //     this.stompClient.publish({
+  //       destination: `/rooms/${roomId}/messages`,
+  //       body: message
+  //     });
+  //   } else {
+  //     console.error('Not connected to WebSocket');
+  //   }
+  // }
 }

@@ -2,7 +2,7 @@ package wiktochat.roomserver;
 
 import java.util.Date;
 
-public class GridMessage {
+public class  GridMessage {
     private String[][] grid;
     private String senderSessionId;
     private Date timeStamp;

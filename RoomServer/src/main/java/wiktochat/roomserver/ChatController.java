@@ -49,6 +49,19 @@ public class ChatController {
     }
   }
 
+  @PostMapping("rooms/{roomId}/messages")
+  public ResponseEntity<Void> sendMessage(@RequestBody GridMessage message, @PathVariable String roomId) {
+    try {
+      System.out.println("Send message - Room: " + roomId + " Message: " + message);
+      chatService.sendMessage(roomId, message);
+      return ResponseEntity.ok().build();
+    } catch (RoomNotFoundException e) {
+      return ResponseEntity.notFound().build();
+    } catch (Exception e) {
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
 
   @GetMapping("/rooms/{roomId}/info")
   public ChatRoom getRoomData(@PathVariable String roomId) {
@@ -58,7 +71,6 @@ public class ChatController {
   @MessageMapping("/rooms/{roomId}/messages")
   public void sendMessage(StompHeaderAccessor headerAccessor, @DestinationVariable String roomId, @Payload GridMessage message) {
     System.out.println("ChatController.sendMessage - Grid received for room: " + roomId);
-    String sessionId = headerAccessor.getSessionId();
-    chatService.sendMessage(sessionId, roomId, message);
+    chatService.sendMessage(roomId, message);
   }
 }
