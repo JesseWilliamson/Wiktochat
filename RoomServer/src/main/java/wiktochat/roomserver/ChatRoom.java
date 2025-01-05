@@ -12,7 +12,7 @@ public class ChatRoom {
     this.messages = new ArrayList<>();
   }
 
-  public void addMessage(Message message) {
+  public void addMessage(GridMessage message) {
     if (message instanceof GridMessage gridMessage) {
       System.out.println("ChatRoom.addMessage - Grid message from " + message.getSenderSessionId());
       messages.add(gridMessage);

@@ -2,29 +2,20 @@ package wiktochat.roomserver;
 
 import java.util.Date;
 
-public class GridMessage extends Message {
+public class GridMessage {
     private String[][] grid;
+    private String senderSessionId;
+    private Date timeStamp;
 
     public GridMessage(String[][] grid, String senderSessionId, Date timestamp) {
-        super(senderSessionId, timestamp);
         this.grid = grid.clone();
-    }
-
-    public GridMessage() {
-        super();
-        this.grid = new String[0][0];
+        this.senderSessionId = senderSessionId;
+        this.timeStamp = timestamp;
     }
 
     public String[][] getGrid() {
         return grid.clone();
     }
-
-    public void setGrid(String[][] grid) {
-        this.grid = grid.clone();
-    }
-
-    @Override
-    public String[][] getData() {
-        return getGrid();
-    }
-} 
+    public String getSenderSessionId() { return senderSessionId; }
+    public Date getTimeStamp() { return timeStamp; }
+}
