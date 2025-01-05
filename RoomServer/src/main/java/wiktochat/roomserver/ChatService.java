@@ -33,17 +33,16 @@ public class ChatService {
     System.out.println("Current users in " + roomId + ": " + roomManager.getUsersInRoom(roomId));
   }
 
-  public void sendMessage(String sessionId, String roomId, String message) {
+  public void sendMessage(String sessionId, String roomId, Message message) {
     if (!roomManager.isUserInRoom(sessionId, roomId)) {
       System.out.println("User " + sessionId + " tried to send a message to a room (" + roomId + ") which they aren't in!");
       System.out.println("Users in " + roomId + " are " + roomManager.getUsersInRoom(roomId));
       return;
     }
     ChatRoom room = rooms.get(roomId);
-    ChatMessage chatMessage = new ChatMessage(sessionId, message);
-    room.addMessage(chatMessage);
+    room.addMessage(message);
     // Broadcast the message to all users subscribed to this room's topic
-    messagingTemplate.convertAndSend(String.format("/rooms/%s/messages", roomId), chatMessage);
+    messagingTemplate.convertAndSend(String.format("/rooms/%s/messages", roomId), message);
   }
 
   public ChatRoom getRoomData(String roomId) {

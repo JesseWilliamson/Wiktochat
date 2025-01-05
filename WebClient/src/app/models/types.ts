@@ -31,9 +31,7 @@ export interface Point {
 }
 
 export interface GridMessage {
-  roomId: string;
   grid: string[][];
-  timestamp?: Date;
 }
 
 

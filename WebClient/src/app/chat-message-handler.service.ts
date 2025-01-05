@@ -1,4 +1,4 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, effect, ɵɵsetComponentScope } from '@angular/core';
 import { Client, StompSubscription } from '@stomp/stompjs';
 import {
   ChatMessage,
@@ -67,14 +67,25 @@ export class ChatMessageHandlerService {
     roomKey: string,
     onSuccess?: () => void,
   ): void {
+
+    if (this._isJoiningRoom()) {
+      console.warn('Already joining a room');
+      return;
+    }
+
+    this._isJoiningRoom.set(true);
+
     this.http.post(`/rooms/${roomKey}/members`, this.sessionId).subscribe({
       next: () => {
         if (onSuccess) {
           onSuccess();
         }
+        this._roomId.set(roomKey);
+        this._isJoiningRoom.set(false);
       },
       error: (error) => {
         console.error('Error joining room:', error);
+        this._isJoiningRoom.set(false);
       },
     });
   }
@@ -123,14 +134,30 @@ export class ChatMessageHandlerService {
     }
 
     const gridMessage: GridMessage = {
-      roomId: this.roomId(),
-      grid,
-      timestamp: new Date()
+      grid
     };
 
-    this.stompClient.publish({
-      destination: `/app/rooms/${this.roomId()}/grid`,
-      body: JSON.stringify(gridMessage)
-    });
+    console.log('Sending grid', gridMessage);
+
+    const roomId = this.roomId();
+    if (roomId) {
+      this.stompClient.publish({
+        destination: `/rooms/${roomId}/messages`,
+        body: JSON.stringify(gridMessage)
+      });
+    } else {
+      console.error('Not connected to a room');
+    }
+  }
+
+  public sendMessage(roomId: string, message: string): void {
+    if (this.stompClient && this.stompClient.connected) {
+      this.stompClient.publish({
+        destination: `/rooms/${roomId}/messages`,
+        body: message
+      });
+    } else {
+      console.error('Not connected to WebSocket');
+    }
   }
 }

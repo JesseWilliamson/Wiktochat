@@ -1,8 +1,17 @@
 package wiktochat.roomserver;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin
@@ -46,10 +55,10 @@ public class ChatController {
     return chatService.getRoomData(roomId);
   }
 
-//    @MessageMapping("/rooms/{roomId}/messages")
-//    public void sendMessage(StompHeaderAccessor headerAccessor, @DestinationVariable String roomId, @Payload MessageDTO message) {
-//        System.out.println("ChatController.sendMessage - Message: " + message.getMessage() + " Room: " + roomId);
-//        String sessionId = headerAccessor.getSessionId();
-//        chatService.sendMessage(sessionId, roomId, message.getMessage());
-//    }
+  @MessageMapping("/rooms/{roomId}/messages")
+  public void sendMessage(StompHeaderAccessor headerAccessor, @DestinationVariable String roomId, @Payload GridMessage message) {
+    System.out.println("ChatController.sendMessage - Grid received for room: " + roomId);
+    String sessionId = headerAccessor.getSessionId();
+    chatService.sendMessage(sessionId, roomId, message);
+  }
 }
