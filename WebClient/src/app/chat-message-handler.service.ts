@@ -6,6 +6,7 @@ import {
   GridMessage,
 } from './models/types';
 import { HttpClient } from '@angular/common/http';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -134,7 +135,9 @@ export class ChatMessageHandlerService {
     }
 
     const gridMessage: GridMessage = {
-      grid
+      grid: grid,
+      senderSessionId: this.sessionId,
+      timeStamp: new Date(),
     };
 
     console.log('Sending grid', gridMessage);

@@ -32,6 +32,8 @@ export interface Point {
 
 export interface GridMessage {
   grid: string[][];
+  senderSessionId: string;
+  timeStamp: Date;
 }
 
 
