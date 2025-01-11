@@ -4,6 +4,7 @@ import { generateUUID } from './libs/utils';
 import {
   ChatMessage,
   CreateRoomResponse,
+  GridMessage,
 } from './models/types';
 import { HttpClient } from '@angular/common/http';
 
@@ -11,7 +12,7 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root',
 })
 export class ChatMessageHandlerService {
-  private _chatMessages = signal<ChatMessage[]>([]);
+  private _chatMessages = signal<GridMessage[]>([]);
   public chatMessages = this._chatMessages.asReadonly();
   private _isConnected = signal<boolean>(false);
   public isConnected = this._isConnected.asReadonly();
@@ -57,8 +58,9 @@ export class ChatMessageHandlerService {
         );
 
         eventSource.addEventListener('message', (event) => {
-          const message = JSON.parse(event.data);
+          const message = JSON.parse(event.data) as GridMessage;
           console.log('Received message:', message);
+          this._chatMessages.update(messages => [...messages, message]);
         });
 
         eventSource.addEventListener('error', (error) => {

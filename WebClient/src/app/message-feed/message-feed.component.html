@@ -1,3 +1,5 @@
 <div class="message-feed">
-  <app-message></app-message>
+  @for (message of chatService.chatMessages(); track message.timeStamp) {
+    <app-message [message]="message"></app-message>
+  }
 </div>
