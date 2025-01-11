@@ -1,5 +1,5 @@
-import { Injectable, signal, effect, OnInit } from '@angular/core';
-import { Client, StompSubscription } from '@stomp/stompjs';
+import { Injectable, signal, effect } from '@angular/core';
+import { StompSubscription } from '@stomp/stompjs';
 import { generateUUID } from './libs/utils';
 import {
   ChatMessage,
@@ -50,35 +50,23 @@ export class ChatMessageHandlerService {
     console.log('Joining room:', roomKey);
     this._isJoiningRoom.set(true);
 
-    const eventSource = this.getServerSentEvent('http://localhost:8080/query?query=test');
-
-    eventSource.addEventListener('message', (event) => {
-      console.log('Event Source Message:', event.data);
-    });
-
-    // Listen for the close event
-    eventSource.addEventListener('close', (event) => {
-      console.log('Server requested connection close', event);
-      eventSource.close();
-    });
-
-    eventSource.addEventListener('error', (error) => {
-      // Only log as error if we haven't received a close event
-      if (!eventSource.readyState) {
-        console.error('EventSource error:', error);
-      } else {
-        console.log('EventSource closed');
-      }
-      eventSource.close();
-      this._isJoiningRoom.set(false);
-    });
-
-    eventSource.addEventListener('open', () => {
-      console.log('EventSource connection opened');
-    });
-
     this.http.post(`/rooms/${roomKey}/members`, this.sessionId).subscribe({
       next: () => {
+        const eventSource = this.getServerSentEvent(
+          `/rooms/${roomKey}/message-stream?sessionId=${this.sessionId}`
+        );
+
+        eventSource.addEventListener('message', (event) => {
+          const message = JSON.parse(event.data);
+          console.log('Received message:', message);
+        });
+
+        eventSource.addEventListener('error', (error) => {
+          console.error('EventSource error:', error);
+          eventSource.close();
+          this._isJoiningRoom.set(false);
+        });
+
         if (onSuccess) {
           onSuccess();
         }
@@ -87,14 +75,12 @@ export class ChatMessageHandlerService {
       },
       error: (error) => {
         console.error('Error joining room:', error);
-        eventSource.close();
         this._isJoiningRoom.set(false);
       },
     });
   }
 
   public createRoom(onSuccess?: (roomId: string | null) => void): void {
-    // Return early if already creating a room
     if (this._isCreatingRoom()) {
       console.warn('Already creating a room');
       return;

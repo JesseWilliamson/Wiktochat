@@ -1,8 +1,6 @@
 package wiktochat.roomserver;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+import org.springframework.context.event.EventListener;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,9 +17,16 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class ChatController {
 
   private final ChatService chatService;
+  private final EmitterService emitterService;
 
-  public ChatController(ChatService chatService) {
+  public ChatController(ChatService chatService, EmitterService emitterService) {
     this.chatService = chatService;
+    this.emitterService = emitterService;
+  }
+
+  @EventListener
+  public void handleGridMessage(GridMessageEvent event) {
+    emitterService.sendMessage(event.getRoomId(), event.getMessage());
   }
 
   @PostMapping("/rooms")
@@ -68,52 +73,8 @@ public class ChatController {
   }
 
   @CrossOrigin
-  @GetMapping(value = "/query", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-  public SseEmitter query(@RequestParam String query) {
-    SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-
-    emitter.onCompletion(() -> {
-        System.out.println("SSE completed for query: " + query);
-    });
-
-    emitter.onTimeout(() -> {
-        System.out.println("SSE timeout for query: " + query);
-        emitter.complete();
-    });
-
-    emitter.onError((ex) -> {
-        System.out.println("SSE error for query: " + query);
-        System.out.println("Error: " + ex.getMessage());
-    });
-
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-    executor.execute(() -> {
-        try {
-            for (int i = 0; i < 5; i++) {
-                try {
-                    emitter.send(SseEmitter.event()
-                        .data("Response part " + (i + 1))
-                        .id(String.valueOf(i))
-                        .name("message")
-                        .build());
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    emitter.completeWithError(e);
-                    break;
-                }
-            }
-            emitter.send(SseEmitter.event()
-                .data("CLOSE")
-                .name("close")
-                .build());
-            emitter.complete();
-        } catch (Exception e) {
-            emitter.completeWithError(e);
-        } finally {
-            executor.shutdown();
-        }
-    });
-
-    return emitter;
+  @GetMapping(value = "/rooms/{roomId}/message-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  public SseEmitter subscribeToRoom(@PathVariable String roomId, @RequestParam String sessionId) {
+    return emitterService.createEmitter(roomId, sessionId);
   }
 }
