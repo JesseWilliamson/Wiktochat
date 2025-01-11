@@ -27,9 +27,6 @@ export class ChatComponent implements OnInit {
 
     if (roomId) {
       try {
-        // Wait for connection before proceeding
-        await this.chatService.awaitConnection();
-
         this.chatService.joinRoom(roomId);
         this.chatService.subscribeToRoom(roomId);
       } catch (error) {

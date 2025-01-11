@@ -3,8 +3,6 @@ package wiktochat.roomserver;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,8 +10,6 @@ public class ChatService {
   private final ConcurrentHashMap<String, ChatRoom> rooms = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
   private final RoomManager roomManager = new RoomManager();
-  @Autowired
-  private SimpMessagingTemplate messagingTemplate;
 
   public String createRoom(String sessionId) {
     String roomId = generateRoomId();
@@ -42,7 +38,7 @@ public class ChatService {
     ChatRoom room = rooms.get(roomId);
     room.addMessage(message);
     // Broadcast the message to all users subscribed to this room's topic
-    messagingTemplate.convertAndSend(String.format("/rooms/%s/messages", roomId), message);
+    //TODO: Send the message via sse
   }
 
   public ChatRoom getRoomData(String roomId) {

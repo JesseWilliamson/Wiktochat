@@ -1,9 +1,9 @@
-import { Injectable, signal, effect, ɵɵsetComponentScope } from '@angular/core';
+import { Injectable, signal, effect, OnInit } from '@angular/core';
 import { Client, StompSubscription } from '@stomp/stompjs';
+import { generateUUID } from './libs/utils';
 import {
   ChatMessage,
   CreateRoomResponse,
-  GridMessage,
 } from './models/types';
 import { HttpClient } from '@angular/common/http';
 
@@ -11,7 +11,6 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root',
 })
 export class ChatMessageHandlerService {
-  private stompClient: Client;
   private _chatMessages = signal<ChatMessage[]>([]);
   public chatMessages = this._chatMessages.asReadonly();
   private _isConnected = signal<boolean>(false);
@@ -28,53 +27,55 @@ export class ChatMessageHandlerService {
   public isCreatingRoom = this._isCreatingRoom.asReadonly();
 
   constructor(private http: HttpClient) {
-    this.stompClient = new Client({
-      brokerURL: 'http://localhost:8080/ws',
-      onConnect: (header) => {
-        console.log('Connected to WebSocket');
-        this._isConnected.set(true);
-        console.log('got header', header.headers['user-name']);
-        this.sessionId = header.headers['user-name'];
-      },
-      onDisconnect: () => {
-        this._isConnected.set(false);
-      },
-      debug: function (str) {
-        console.log(str);
-      },
-    });
-    this.stompClient.activate();
+    this.sessionId = generateUUID();
+    console.log('sessionId', this.sessionId);
     effect(() => {
       console.log(this.chatMessages());
     });
   }
 
-  // TODO: I'm not sure this polling like this is the best way to handle waiting for connection
-  public awaitConnection(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const checkConnection = () => {
-        if (this._isConnected()) {
-          resolve(true);
-        } else {
-          // TODO: Make a config file for these kinds of values
-          setTimeout(checkConnection, 100);
-        }
-      };
-      checkConnection();
-    });
+  public getServerSentEvent(url: string): EventSource {
+    return new EventSource(url, { withCredentials: true });
   }
 
   public joinRoom(
     roomKey: string,
     onSuccess?: () => void,
   ): void {
-
     if (this._isJoiningRoom()) {
       console.warn('Already joining a room');
       return;
     }
 
+    console.log('Joining room:', roomKey);
     this._isJoiningRoom.set(true);
+
+    const eventSource = this.getServerSentEvent('http://localhost:8080/query?query=test');
+
+    eventSource.addEventListener('message', (event) => {
+      console.log('Event Source Message:', event.data);
+    });
+
+    // Listen for the close event
+    eventSource.addEventListener('close', (event) => {
+      console.log('Server requested connection close', event);
+      eventSource.close();
+    });
+
+    eventSource.addEventListener('error', (error) => {
+      // Only log as error if we haven't received a close event
+      if (!eventSource.readyState) {
+        console.error('EventSource error:', error);
+      } else {
+        console.log('EventSource closed');
+      }
+      eventSource.close();
+      this._isJoiningRoom.set(false);
+    });
+
+    eventSource.addEventListener('open', () => {
+      console.log('EventSource connection opened');
+    });
 
     this.http.post(`/rooms/${roomKey}/members`, this.sessionId).subscribe({
       next: () => {
@@ -86,6 +87,7 @@ export class ChatMessageHandlerService {
       },
       error: (error) => {
         console.error('Error joining room:', error);
+        eventSource.close();
         this._isJoiningRoom.set(false);
       },
     });
@@ -104,6 +106,7 @@ export class ChatMessageHandlerService {
       next: (response) => {
         console.log('Room created:', response.roomId);
         if (onSuccess) {
+          this._roomId.set(response.roomId ?? '');
           onSuccess(response.roomId || null);
         }
         this._isCreatingRoom.set(false);
@@ -134,18 +137,7 @@ export class ChatMessageHandlerService {
     });
   }
 
-  public subscribeToRoom(roomKey: string): void {
-    console.log('Subscribed to Room', roomKey);
-    this.messageSubscription = this.stompClient.subscribe(
-      `/rooms/${roomKey}/messages`,
-      (message) => {
-        const messageContent = JSON.parse(message.body);
-        console.log('Catchall', messageContent);
-        const chatMessage = messageContent as ChatMessage;
-        this._chatMessages.update((messages) => [...messages, chatMessage]);
-      },
-    );
-  }
+  public subscribeToRoom(roomKey: string): void {}
 
   // sendGrid(grid: string[][]): void {
   //   if (!this.stompClient || !this.stompClient.connected) {

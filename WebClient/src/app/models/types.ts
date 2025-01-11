@@ -20,6 +20,10 @@ export interface JoinRoomRequest {
   roomId: string;
 }
 
+export interface CreateSessionIdResponse {
+  sessionId: string;
+}
+
 export interface CreateRoomResponse {
   roomId?: string;
   message?: string;
