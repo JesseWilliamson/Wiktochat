@@ -1,4 +1,4 @@
-import { Component, effect } from '@angular/core';
+import { Component } from '@angular/core';
 import { MessageComponent } from '../chat-message/message.component';
 import { ChatMessageHandlerService } from '../chat-message-handler.service';
 import { CommonModule } from '@angular/common';

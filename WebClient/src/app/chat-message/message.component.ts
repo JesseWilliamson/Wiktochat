@@ -13,15 +13,23 @@ export class MessageComponent {
   @Input() message!: GridMessage;
   @ViewChild('canvas') canvas!: ElementRef<HTMLCanvasElement>;
 
-  private readonly CANVAS_WIDTH: number = 1200;
-  private readonly CANVAS_HEIGHT: number = 600;
-  private readonly PIXEL_SIZE: number = 1; // Size of each drawable cell
+  private readonly CANVAS_WIDTH = 1200;
+  private readonly CANVAS_HEIGHT = 600;
+  private PIXEL_SIZE = 1;
 
   ngAfterViewInit() {
-    // TODO: Put draw logic into a util library to share between components
-    // TODO: Adjust size of canvas to fit parent container
     const canvas = this.canvas.nativeElement;
-    console.log(this.parentWidth(this.canvas));
+    // const parentWidth = this.parentWidth(this.canvas);
+    console.log("width", canvas.width);
+
+    // Calculate pixel size based on parent width
+    this.PIXEL_SIZE = this.CANVAS_WIDTH / canvas.width;
+    console.log("pixel size", this.PIXEL_SIZE);
+
+    // Set canvas dimensions to match parent
+    // canvas.width = parentWidth;
+    // canvas.height = (parentWidth * this.CANVAS_HEIGHT) / this.CANVAS_WIDTH; // maintain aspect ratio
+
     this.drawGrid(canvas);
     this.drawGivenGrid(canvas, this.message.grid);
   }
@@ -30,15 +38,16 @@ export class MessageComponent {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas dimensions
-    canvas.width = this.CANVAS_WIDTH;
-    canvas.height = this.CANVAS_HEIGHT;
-
     // Draw each pixel in the grid
     for (let x = 0; x < this.CANVAS_WIDTH; x++) {
       for (let y = 0; y < this.CANVAS_HEIGHT; y++) {
         ctx.fillStyle = grid[x][y];
-        ctx.fillRect(x * this.PIXEL_SIZE, y * this.PIXEL_SIZE, this.PIXEL_SIZE, this.PIXEL_SIZE);
+        ctx.fillRect(
+          x * this.PIXEL_SIZE,
+          y * this.PIXEL_SIZE,
+          this.PIXEL_SIZE,
+          this.PIXEL_SIZE
+        );
       }
     }
   }
@@ -52,12 +61,16 @@ export class MessageComponent {
     canvas.height = this.CANVAS_HEIGHT;
 
     // Clear with white background
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
   }
 
   parentWidth(elemenReft: ElementRef): number {
     return elemenReft.nativeElement.parentElement.clientWidth
+  }
+
+  parentHeight(elemenReft: ElementRef): number {
+    return elemenReft.nativeElement.parentElement.clientHeight
   }
 
   remainingWidth(elemenReft: ElementRef): number {
