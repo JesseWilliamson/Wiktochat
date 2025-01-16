@@ -5,7 +5,6 @@ import { Point } from '../models/types';
 @Component({
   selector: 'app-drawable-canvas',
   templateUrl: './drawable-canvas.component.html',
-  styleUrls: ['./drawable-canvas.component.less'],
   standalone: true,
   imports: [BaseCanvasComponent]
 })
@@ -19,7 +18,7 @@ export class DrawableCanvasComponent extends BaseCanvasComponent {
     super.afterInit();
   }
 
-  mouseDown(e: MouseEvent): void {
+  mouseDown(e: PointerEvent): void {
     this.mouseDownFlag = true;
     this.draw(e);
   }
@@ -29,31 +28,81 @@ export class DrawableCanvasComponent extends BaseCanvasComponent {
     this.lastPos = null;
   }
 
-  draw(e: MouseEvent): void {
-    if (!this.mouseDownFlag) return;
-
-    const clampedPosition = this.getGridPosition(e.clientX, e.clientY);
-
-    if (this.lastPos && clampedPosition !== this.lastPos) {
-      const points = this.interpolatePoints(this.lastPos, clampedPosition);
-      for (const point of points) {
-        this.drawCell(point.x, point.y, this.selectedColor());
+  handleMouseLeave(e: PointerEvent): void {
+    if (this.mouseDownFlag) {
+      const finalPosition = this.getGridPosition(e.clientX, e.clientY);
+      
+      const clampedX = Math.max(0, Math.min(finalPosition.x, this.grid_cells_x() - 1));
+      const clampedY = Math.max(0, Math.min(finalPosition.y, this.grid_cells_y() - 1));
+      
+      if (this.lastPos) {
+        const points = this.interpolatePoints(this.lastPos, { x: clampedX, y: clampedY });
+        for (const point of points) {
+          if (point.x >= 0 && point.y >= 0 && 
+              point.x < this.grid_cells_x() && point.y < this.grid_cells_y()) {
+            this.drawCell(point.x, point.y, this.selectedColor());
+          }
+        }
       }
     }
-    this.lastPos = clampedPosition;
+    this.mouseDownFlag = false;
+  }
 
-    this.drawCell(clampedPosition.x, clampedPosition.y, this.selectedColor());
+  handleMouseEnter(e: PointerEvent): void {
+    if (e.buttons === 1) {
+      this.mouseDownFlag = true;
+      this.lastPos = null;
+      this.draw(e);
+    }
+  }
+
+  draw(e: PointerEvent): void {
+    if (!this.mouseDownFlag) return;
+
+    const mainPosition = this.getGridPosition(e.clientX, e.clientY);
+    
+    const samples: Point[] = [mainPosition];
+    
+    if (Math.abs(e.movementX) > this.pixel_size_x || Math.abs(e.movementY) > this.pixel_size_y) {
+      const steps = Math.max(
+        Math.ceil(Math.abs(e.movementX) / this.pixel_size_x),
+        Math.ceil(Math.abs(e.movementY) / this.pixel_size_y)
+      );
+      
+      for (let i = 1; i < steps; i++) {
+        const x = e.clientX - (e.movementX * (i / steps));
+        const y = e.clientY - (e.movementY * (i / steps));
+        samples.push(this.getGridPosition(x, y));
+      }
+    }
+
+    for (const position of samples) {
+      const clampedPosition = {
+        x: Math.max(0, Math.min(position.x, this.grid_cells_x() - 1)),
+        y: Math.max(0, Math.min(position.y, this.grid_cells_y() - 1))
+      };
+
+      if (this.lastPos && (clampedPosition.x !== this.lastPos.x || clampedPosition.y !== this.lastPos.y)) {
+        const points = this.interpolatePoints(this.lastPos, clampedPosition);
+        for (const point of points) {
+          if (point.x >= 0 && point.y >= 0 && 
+              point.x < this.grid_cells_x() && point.y < this.grid_cells_y()) {
+            this.drawCell(point.x, point.y, this.selectedColor());
+          }
+        }
+      }
+      this.lastPos = clampedPosition;
+      this.drawCell(clampedPosition.x, clampedPosition.y, this.selectedColor());
+    }
   }
 
   private getGridPosition(clientX: number, clientY: number): Point {
-    // if (!this.state || !this.canvas()) return { x: 0, y: 0 };
-
     const rect = this.canvas()?.nativeElement.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };
-
+    
     const x = clientX - rect.left;
     const y = clientY - rect.top;
-
+    
     const xCell = Math.floor(x / this.pixel_size_x);
     const yCell = Math.floor(y / this.pixel_size_y);
     return { x: xCell, y: yCell };
