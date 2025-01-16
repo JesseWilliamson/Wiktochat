@@ -1,41 +1,46 @@
-import { Component, ViewChild, ElementRef, Input, AfterViewInit } from '@angular/core';
+import { Component, input, viewChild, afterNextRender } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { GridMessage } from '../models/types';
-import * as CanvasUtils from '../libs/canvas-utils';
+import { BaseCanvasComponent } from '../base-canvas/base-canvas.component';
 
 @Component({
   selector: 'app-message',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, BaseCanvasComponent],
   templateUrl: './message.component.html',
   styleUrl: './message.component.less',
 })
-export class MessageComponent implements AfterViewInit {
-  @ViewChild('canvas') canvas!: ElementRef<HTMLCanvasElement>;
-  @Input() message!: GridMessage;
+export class MessageComponent {
+  message = input.required<GridMessage>();
+  canvas = viewChild<BaseCanvasComponent>('canvas');
 
-  ngAfterViewInit() {
-    const canvas = this.canvas.nativeElement;
-    this.drawMessage(canvas);
+  constructor() {
+    afterNextRender(() => {
+      this.initializeCanvas();
+    });
   }
 
-  private drawMessage(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  private initializeCanvas() {
+    // setTimeout(0) moves the initialization code to the next event loop tick.
+    // TODO: Try to find a better solution for this
+    setTimeout(() => {
+      const canvasRef = this.canvas();
+      const messageData = this.message();
 
-    // Initialize canvas with white background
-    CanvasUtils.initializeCanvas(canvas);
+      console.log('Message grid dimensions:', {
+        width: messageData.grid.length,
+        height: messageData.grid[0]?.length
+      });
 
-    // Draw the grid from the message
-    if (this.message.grid) {
-      for (let x = 0; x < CanvasUtils.CANVAS_WIDTH; x++) {
-        for (let y = 0; y < CanvasUtils.CANVAS_HEIGHT; y++) {
-          const color = this.message.grid[x][y];
-          if (color && color !== '#FFFFFF') {
-            CanvasUtils.drawCell(x, y, ctx, color);
-          }
-        }
+      if (canvasRef && messageData.grid) {
+        console.log('Drawing grid to canvas');
+        canvasRef.drawGrid(messageData.grid);
+      } else {
+        console.error('Failed to initialize:', {
+          hasCanvas: !!canvasRef,
+          hasGrid: !!messageData.grid
+        });
       }
-    }
+    }, 0);
   }
 }

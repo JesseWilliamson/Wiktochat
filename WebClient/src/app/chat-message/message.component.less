@@ -1,22 +1,20 @@
 .message {
   display: flex;
   flex-direction: column;
-  aspect-ratio: 2;
-  width: 600px;
   border: 1px solid black;
   border-radius: 20px;
-  padding: 10px;
+  // padding: 10px;
 
-  canvas {
-    border-radius: 20px;
-    border: 1px solid red;
-  }
+  align-items: center;
 }
+
+
 
 .message-header {
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.5rem;
+  gap: 20px;
 
   .sender {
     font-weight: bold;
@@ -26,10 +24,4 @@
     color: #666;
     font-size: 0.9em;
   }
-}
-
-.message-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
 }

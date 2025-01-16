@@ -1,5 +1,9 @@
-<div class="easel">
-  <app-canvas [selectedColor]="selectedColor"></app-canvas>
+<div class="easel-container">
+  <app-drawable-canvas
+    [selectedColor]="selectedColor"
+    [canvas_width]="1200"
+    [canvas_height]="600">
+  </app-drawable-canvas>
   <div class="controls">
     <div class="leftControls">
       <input type="color" [(ngModel)]="selectedColor" id="colorPicker" />
@@ -11,7 +15,6 @@
     <div class="rightControls">
       <button (click)="clearGrid()">Clear</button>
       <button class="primary" (click)="sendGrid()">Send</button>
-      <div></div>
     </div>
   </div>
 </div>
