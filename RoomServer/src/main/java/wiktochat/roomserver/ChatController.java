@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.List;
+
 @RestController
 @CrossOrigin
 public class ChatController {
@@ -58,6 +60,16 @@ public class ChatController {
       return ResponseEntity.notFound().build();
     } catch (Exception e) {
       return ResponseEntity.badRequest().build();
+    }
+  }
+
+  @GetMapping("rooms/{roomId}/messages")
+  public ResponseEntity<List<GridMessage>> getMessages(@PathVariable String roomId) {
+    try {
+      System.out.println("Get messages - Room: " + roomId);
+      return ResponseEntity.ok(chatService.getMessages(roomId));
+    } catch (RoomNotFoundException e) {
+      return ResponseEntity.notFound().build();
     }
   }
 

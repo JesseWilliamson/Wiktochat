@@ -3,6 +3,7 @@ package wiktochat.roomserver;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,13 +44,21 @@ public class ChatService {
     }
     ChatRoom room = rooms.get(roomId);
     room.addMessage(message);
-
     eventPublisher.publishEvent(new GridMessageEvent(roomId, message));
   }
 
   public ChatRoom getRoomData(String roomId) {
     System.out.println("Getting room data for: " + roomId);
     return rooms.get(roomId);
+  }
+
+  public List<GridMessage> getMessages(String roomId) {
+    System.out.println("Getting messages for: " + roomId);
+    ChatRoom room = rooms.get(roomId);
+    if (room == null) {
+      throw new RoomNotFoundException("Room " + roomId + " does not exist");
+    }
+    return room.getMessages();
   }
 
   // TODO: make sure this doesn't generate duplicate IDs

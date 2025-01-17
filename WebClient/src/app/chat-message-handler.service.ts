@@ -48,6 +48,17 @@ export class ChatMessageHandlerService {
     console.log('Joining room:', roomKey);
     this._isJoiningRoom.set(true);
 
+    this.http.get(`/rooms/${roomKey}/messages`).subscribe({
+      next: (messages) => {
+        console.log('Messages:', messages);
+        this._chatMessages.set(messages as GridMessage[]);
+      },
+      error: (error) => {
+        console.error('Error fetching messages:', error);
+        this._isJoiningRoom.set(false);
+      },
+    });
+
     this.http.post(`/rooms/${roomKey}/members`, this.sessionId).subscribe({
       next: () => {
         const eventSource = this.getServerSentEvent(

@@ -15,7 +15,7 @@ public class ChatRoom {
   public void addMessage(GridMessage message) {
     if (message instanceof GridMessage gridMessage) {
       System.out.println("ChatRoom.addMessage - Grid message from " + message.getSenderSessionId());
-      messages.add(gridMessage);
+      messages.addFirst(gridMessage);
     }
   }
 
