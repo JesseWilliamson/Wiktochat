@@ -1,10 +1,10 @@
 package wiktochat.roomserver;
 
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ChatService {
@@ -29,7 +29,7 @@ public class ChatService {
     System.out.println("ChatService.joinRoom - SessionId: " + sessionId + " Room: " + roomId);
     ChatRoom room = rooms.get(roomId);
     if (room == null) {
-        throw new RoomNotFoundException("Room " + roomId + " does not exist");
+      throw new RoomNotFoundException("Room " + roomId + " does not exist");
     }
     roomManager.addUserToRoom(sessionId, roomId);
     System.out.println("Current users in " + roomId + ": " + roomManager.getUsersInRoom(roomId));
@@ -37,13 +37,13 @@ public class ChatService {
 
   public void sendMessage(String roomId, GridMessage message) {
     if (!roomManager.isUserInRoom(message.getSenderSessionId(), roomId)) {
-        System.out.println("User " + message.getSenderSessionId() + " tried to send a message to a room (" + roomId + ") which they aren't in!");
-        System.out.println("Users in " + roomId + " are " + roomManager.getUsersInRoom(roomId));
-        return;
+      System.out.println("User " + message.getSenderSessionId() + " tried to send a message to a room (" + roomId + ") which they aren't in!");
+      System.out.println("Users in " + roomId + " are " + roomManager.getUsersInRoom(roomId));
+      return;
     }
     ChatRoom room = rooms.get(roomId);
     room.addMessage(message);
-    
+
     eventPublisher.publishEvent(new GridMessageEvent(roomId, message));
   }
 
