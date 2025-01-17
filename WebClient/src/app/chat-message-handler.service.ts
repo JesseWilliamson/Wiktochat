@@ -12,24 +12,15 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root',
 })
 export class ChatMessageHandlerService {
-  private _chatMessages = signal<GridMessage[]>([]);
-  public chatMessages = this._chatMessages.asReadonly();
-  private _isConnected = signal<boolean>(false);
-  public isConnected = this._isConnected.asReadonly();
-  private _username = signal<string>('');
-  public username = this._username.asReadonly();
-  private _roomId = signal<string>('');
-  public roomId = this._roomId.asReadonly();
-  private sessionId = '';
-  private messageSubscription: StompSubscription | undefined;
-  private _isJoiningRoom = signal<boolean>(false);
-  private _isCreatingRoom = signal<boolean>(false);
-  public isJoiningRoom = this._isJoiningRoom.asReadonly();
-  public isCreatingRoom = this._isCreatingRoom.asReadonly();
+  private readonly chatMessages = signal<GridMessage[]>([]);
+  private readonly roomId = signal<string>('');
+  private readonly sessionId = generateUUID();
+  private readonly isJoiningRoom = signal<boolean>(false);
+  private readonly isCreatingRoom = signal<boolean>(false);
 
-  constructor(private http: HttpClient) {
-    this.sessionId = generateUUID();
-    console.log('sessionId', this.sessionId);
+  constructor(
+    private readonly http: HttpClient
+  ) {
     effect(() => {
       console.log(this.chatMessages());
     });
@@ -40,75 +31,75 @@ export class ChatMessageHandlerService {
   }
 
   public joinRoom(roomKey: string, onSuccess?: () => void): void {
-    if (this._isJoiningRoom()) {
+    if (this.isJoiningRoom()) {
       console.warn('Already joining a room');
       return;
     }
 
     console.log('Joining room:', roomKey);
-    this._isJoiningRoom.set(true);
+    this.isJoiningRoom.set(true);
 
     this.http.get(`/rooms/${roomKey}/messages`).subscribe({
       next: (messages) => {
         console.log('Messages:', messages);
-        this._chatMessages.set(messages as GridMessage[]);
+        this.chatMessages.set(messages as GridMessage[]);
       },
       error: (error) => {
         console.error('Error fetching messages:', error);
-        this._isJoiningRoom.set(false);
+        this.isJoiningRoom.set(false);
       },
     });
 
     this.http.post(`/rooms/${roomKey}/members`, this.sessionId).subscribe({
       next: () => {
-        const eventSource = this.getServerSentEvent(
+        const eventSource = new EventSource(
           `/rooms/${roomKey}/message-stream?sessionId=${this.sessionId}`,
         );
 
         eventSource.addEventListener('message', (event) => {
           const message = JSON.parse(event.data) as GridMessage;
-          this._chatMessages.update((messages) => [message, ...messages]);
+          this.chatMessages.update((messages) => [message, ...messages]);
         });
 
         eventSource.addEventListener('error', (error) => {
           console.error('EventSource error:', error);
           eventSource.close();
-          this._isJoiningRoom.set(false);
+          this.isJoiningRoom.set(false);
         });
 
         if (onSuccess) {
           onSuccess();
         }
-        this._roomId.set(roomKey);
-        this._isJoiningRoom.set(false);
+        this.roomId.set(roomKey);
+        this.isJoiningRoom.set(false);
       },
       error: (error) => {
         console.error('Error joining room:', error);
-        this._isJoiningRoom.set(false);
+        this.isJoiningRoom.set(false);
       },
     });
   }
 
   public createRoom(onSuccess?: (roomId: string | null) => void): void {
-    if (this._isCreatingRoom()) {
+    if (this.isCreatingRoom()) {
       console.warn('Already creating a room');
       return;
     }
 
-    this._isCreatingRoom.set(true);
+    this.isCreatingRoom.set(true);
 
     this.http.post<CreateRoomResponse>('/rooms', this.sessionId).subscribe({
       next: (response) => {
         console.log('Room created:', response.roomId);
         if (onSuccess) {
-          this._roomId.set(response.roomId ?? '');
+          this.roomId.set(response.roomId ?? '');
           onSuccess(response.roomId || null);
         }
-        this._isCreatingRoom.set(false);
+        this.isCreatingRoom.set(false);
       },
       error: (error) => {
         console.error('Error creating room:', error);
-        this._isCreatingRoom.set(false);
+        this.isCreatingRoom.set(false);
       },
     });
   }
@@ -129,42 +120,4 @@ export class ChatMessageHandlerService {
       },
     });
   }
-
-  // public subscribeToRoom(roomKey: string): void {}
-
-  // sendGrid(grid: string[][]): void {
-  //   if (!this.stompClient || !this.stompClient.connected) {
-  //     console.error('Not connected to WebSocket');
-  //     return;
-  //   }
-
-  //   const gridMessage: GridMessage = {
-  //     grid: grid,
-  //     senderSessionId: this.sessionId,
-  //     timeStamp: new Date(),
-  //   };
-
-  //   console.log('Sending grid', gridMessage);
-
-  //   const roomId = this.roomId();
-  //   if (roomId) {
-  //     this.stompClient.publish({
-  //       destination: `/rooms/${roomId}/messages`,
-  //       body: JSON.stringify(gridMessage)
-  //     });
-  //   } else {
-  //     console.error('Not connected to a room');
-  //   }
-  // }
-
-  // public sendMessage(roomId: string, message: string): void {
-  //   if (this.stompClient && this.stompClient.connected) {
-  //     this.stompClient.publish({
-  //       destination: `/rooms/${roomId}/messages`,
-  //       body: message
-  //     });
-  //   } else {
-  //     console.error('Not connected to WebSocket');
-  //   }
-  // }
 }
