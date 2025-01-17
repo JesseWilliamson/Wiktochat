@@ -1,7 +1,9 @@
-<canvas #canvas
-    (pointerdown)="mouseDown($event)"
-    (pointermove)="draw($event)"
-    (pointerup)="stopDrawing()"
-    (pointerleave)="handleMouseLeave($event)"
-    (pointerenter)="handleMouseEnter($event)">
+<canvas
+  #canvas
+  (pointerdown)="mouseDown($event)"
+  (pointermove)="draw($event)"
+  (pointerup)="stopDrawing()"
+  (pointerleave)="handleMouseLeave($event)"
+  (pointerenter)="handleMouseEnter($event)"
+>
 </canvas>

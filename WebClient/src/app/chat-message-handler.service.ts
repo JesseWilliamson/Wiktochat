@@ -2,7 +2,6 @@ import { Injectable, signal, effect } from '@angular/core';
 import { StompSubscription } from '@stomp/stompjs';
 import { generateUUID } from './libs/utils';
 import {
-  ChatMessage,
   CreateRoomResponse,
   GridMessage,
   OutGoingGridMessage,
@@ -40,10 +39,7 @@ export class ChatMessageHandlerService {
     return new EventSource(url, { withCredentials: true });
   }
 
-  public joinRoom(
-    roomKey: string,
-    onSuccess?: () => void,
-  ): void {
+  public joinRoom(roomKey: string, onSuccess?: () => void): void {
     if (this._isJoiningRoom()) {
       console.warn('Already joining a room');
       return;
@@ -55,12 +51,12 @@ export class ChatMessageHandlerService {
     this.http.post(`/rooms/${roomKey}/members`, this.sessionId).subscribe({
       next: () => {
         const eventSource = this.getServerSentEvent(
-          `/rooms/${roomKey}/message-stream?sessionId=${this.sessionId}`
+          `/rooms/${roomKey}/message-stream?sessionId=${this.sessionId}`,
         );
 
         eventSource.addEventListener('message', (event) => {
           const message = JSON.parse(event.data) as GridMessage;
-          this._chatMessages.update(messages => [message, ...messages]);
+          this._chatMessages.update((messages) => [message, ...messages]);
         });
 
         eventSource.addEventListener('error', (error) => {
@@ -106,13 +102,11 @@ export class ChatMessageHandlerService {
     });
   }
 
-  public sendGridMessage(
-    grid: string[][],
-  ): void {
+  public sendGridMessage(grid: string[][]): void {
     const payload = {
       grid: grid,
       senderSessionId: this.sessionId,
-      timeStamp: new Date()
+      timeStamp: new Date(),
     } as OutGoingGridMessage;
 
     this.http.post(`/rooms/${this.roomId()}/messages`, payload).subscribe({

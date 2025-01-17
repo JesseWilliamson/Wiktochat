@@ -27,8 +27,8 @@ export class RoomSelectComponent {
   }
 
   public async joinRoom() {
-    this.chatService.joinRoom(this.roomId, ()=> {
-      this.router.navigate(['/chat', this.roomId])
+    this.chatService.joinRoom(this.roomId, () => {
+      this.router.navigate(['/chat', this.roomId]);
     });
   }
 }

@@ -1,7 +1,7 @@
 <div class="message">
   <div class="message-header">
     <span class="sender">{{ message().senderSessionId.substring(0, 6) }}</span>
-    <span class="timestamp">{{ message().timeStamp | date:'short' }}</span>
+    <span class="timestamp">{{ message().timeStamp | date: "short" }}</span>
   </div>
   <app-base-canvas
     #canvas

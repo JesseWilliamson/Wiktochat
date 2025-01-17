@@ -1,9 +1,16 @@
-import { Component, ElementRef, afterNextRender, input, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterNextRender,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 @Component({
   selector: 'app-base-canvas',
   templateUrl: './base-canvas.component.html',
-  standalone: true
+  standalone: true,
 })
 export class BaseCanvasComponent {
   protected canvas = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
@@ -42,9 +49,9 @@ export class BaseCanvasComponent {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Initialize grid
-    const initialGrid = Array(this.grid_cells_x()).fill(null).map(() =>
-      Array(this.grid_cells_y()).fill(this.DEFAULT_COLOR)
-    );
+    const initialGrid = Array(this.grid_cells_x())
+      .fill(null)
+      .map(() => Array(this.grid_cells_y()).fill(this.DEFAULT_COLOR));
     this.grid.set(initialGrid);
 
     this.pixel_size_x = canvas.width / this.grid_cells_x();
@@ -61,7 +68,7 @@ export class BaseCanvasComponent {
     // Create a new grid array with the updated cell
     const newGrid = currentGrid.map((row, i) => {
       if (i === x) {
-        return row.map((cell, j) => j === y ? color : cell);
+        return row.map((cell, j) => (j === y ? color : cell));
       }
       return row;
     });
@@ -90,7 +97,7 @@ export class BaseCanvasComponent {
       gridWidth: grid.length,
       gridHeight: grid[0]?.length,
       currentGridWidth: currentGrid.length,
-      currentGridHeight: currentGrid[0]?.length
+      currentGridHeight: currentGrid[0]?.length,
     });
 
     // Create a new grid with the updated cells
@@ -112,7 +119,7 @@ export class BaseCanvasComponent {
           return color;
         }
         return cell;
-      })
+      }),
     );
 
     // Update the signal with the new grid
@@ -136,9 +143,9 @@ export class BaseCanvasComponent {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Reset grid
-    const newGrid = Array(this.grid_cells_x()).fill(null).map(() =>
-      Array(this.grid_cells_y()).fill(this.DEFAULT_COLOR)
-    );
+    const newGrid = Array(this.grid_cells_x())
+      .fill(null)
+      .map(() => Array(this.grid_cells_y()).fill(this.DEFAULT_COLOR));
     this.grid.set(newGrid);
   }
 }

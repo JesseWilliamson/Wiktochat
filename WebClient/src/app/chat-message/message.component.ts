@@ -29,7 +29,7 @@ export class MessageComponent {
 
       console.log('Message grid dimensions:', {
         width: messageData.grid.length,
-        height: messageData.grid[0]?.length
+        height: messageData.grid[0]?.length,
       });
 
       if (canvasRef && messageData.grid) {
@@ -38,7 +38,7 @@ export class MessageComponent {
       } else {
         console.error('Failed to initialize:', {
           hasCanvas: !!canvasRef,
-          hasGrid: !!messageData.grid
+          hasGrid: !!messageData.grid,
         });
       }
     }, 0);

@@ -46,4 +46,3 @@ export interface OutGoingGridMessage {
   senderSessionId: string;
   timeStamp: Date;
 }
-

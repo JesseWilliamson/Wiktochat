@@ -23,7 +23,7 @@ export class ChatComponent implements OnInit {
 
   private async initializeRoom() {
     const roomId = this.route.snapshot.paramMap.get('roomId');
-    console.log("roomId ", roomId);
+    console.log('roomId ', roomId);
 
     if (roomId) {
       try {

@@ -2,7 +2,7 @@ import { Component, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DrawableCanvasComponent } from '../drawable-canvas/drawable-canvas.component';
 import { ChatMessageHandlerService } from '../chat-message-handler.service';
-import { MessageComponent } from "../chat-message/message.component";
+import { MessageComponent } from '../chat-message/message.component';
 
 @Component({
   selector: 'app-easel',
