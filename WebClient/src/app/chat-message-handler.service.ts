@@ -5,6 +5,7 @@ import {
   ChatMessage,
   CreateRoomResponse,
   GridMessage,
+  OutGoingGridMessage,
 } from './models/types';
 import { HttpClient } from '@angular/common/http';
 
@@ -59,8 +60,7 @@ export class ChatMessageHandlerService {
 
         eventSource.addEventListener('message', (event) => {
           const message = JSON.parse(event.data) as GridMessage;
-          console.log('Received message:', message);
-          this._chatMessages.update(messages => [...messages, message]);
+          this._chatMessages.update(messages => [message, ...messages]);
         });
 
         eventSource.addEventListener('error', (error) => {
@@ -107,13 +107,13 @@ export class ChatMessageHandlerService {
   }
 
   public sendGridMessage(
-    gridMessage: string[][],
+    grid: string[][],
   ): void {
     const payload = {
-      grid: gridMessage,
+      grid: grid,
       senderSessionId: this.sessionId,
       timeStamp: new Date()
-    };
+    } as OutGoingGridMessage;
 
     this.http.post(`/rooms/${this.roomId()}/messages`, payload).subscribe({
       next: () => {
@@ -125,7 +125,7 @@ export class ChatMessageHandlerService {
     });
   }
 
-  public subscribeToRoom(roomKey: string): void {}
+  // public subscribeToRoom(roomKey: string): void {}
 
   // sendGrid(grid: string[][]): void {
   //   if (!this.stompClient || !this.stompClient.connected) {

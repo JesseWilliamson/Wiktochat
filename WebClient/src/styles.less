@@ -1,42 +1,62 @@
 /* You can add global styles to this file, and also import other style files */
 @import "normalize.css";
 
+// Variables
+@primary-color: hsl(215, 100%, 50%);
+@success-color: hsl(145, 80%, 40%);
+@danger-color: hsl(0, 80%, 50%);
+@border-radius: 5px;
+
+// Layout
 .main {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+// Typography
 h1 {
-  color: hsl(0, 0%, 0%);
-  // text-shadow: 2px 4px 5px hsl(230, 28%, 25%);
-  // epilogue typeface by google fonts
   font-family: "Epilogue", sans-serif;
   font-weight: 700;
-  font-size: 4rem;
+  font-size: 64px;
   color: hsl(238, 100%, 50%);
 }
 
+// Common Components
+.box {
+  border: 1px solid black;
+  border-radius: 10px;
+  box-shadow: 5px 5px hsl(0, 0%, 0%);
+  padding: 16px;
+}
+
+.label {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+// Form Elements
 input {
-  font-size: 1.25rem;
+  font-size: 20px;
   background-color: hsl(0, 0%, 100%);
   border: 1px solid hsl(0, 0%, 0%);
-  border-radius: 5px;
+  border-radius: @border-radius;
   box-shadow: 1px 1px hsl(0, 0%, 0%);
-  padding: 0.6rem;
+  padding: 10px;
 
   &:focus {
     outline: none;
   }
 }
 
+// Buttons
 button {
-  font-size: 1.25rem;
+  font-size: 20px;
   background-color: hsl(0, 0%, 100%);
   border: 1px solid hsl(0, 0%, 0%);
-  border-radius: 5px;
+  border-radius: @border-radius;
   box-shadow: 1px 1px hsl(0, 0%, 0%);
-  padding: 0.6rem;
+  padding: 10px;
 
   &:hover {
     background-color: hsl(0, 0%, 95%);
@@ -50,41 +70,41 @@ button {
   }
 
   &.primary {
-    background-color: hsl(215, 100%, 50%);
+    background-color: @primary-color;
     color: white;
 
     &:hover {
-      background-color: hsl(215, 100%, 45%);
+      background-color: darken(@primary-color, 5%);
     }
 
     &:active {
-      background-color: hsl(215, 100%, 40%);
+      background-color: darken(@primary-color, 10%);
     }
   }
 
   &.success {
-    background-color: hsl(145, 80%, 40%);
+    background-color: @success-color;
     color: white;
 
     &:hover {
-      background-color: hsl(145, 80%, 35%);
+      background-color: darken(@success-color, 5%);
     }
 
     &:active {
-      background-color: hsl(145, 80%, 30%);
+      background-color: darken(@success-color, 10%);
     }
   }
 
   &.danger {
-    background-color: hsl(0, 80%, 50%);
+    background-color: @danger-color;
     color: white;
 
     &:hover {
-      background-color: hsl(0, 80%, 45%);
+      background-color: darken(@danger-color, 5%);
     }
 
     &:active {
-      background-color: hsl(0, 80%, 40%);
+      background-color: darken(@danger-color, 10%);
     }
   }
 
@@ -106,16 +126,4 @@ button {
       "GRAD" 0,
       "opsz" 24;
   }
-}
-
-.label {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.box {
-  border: 1px solid black;
-  border-radius: 10px;
-  box-shadow: 5px 5px hsl(0, 0%, 0%);
-  padding: 1rem;
 }

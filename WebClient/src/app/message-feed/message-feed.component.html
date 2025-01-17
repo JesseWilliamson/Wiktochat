@@ -1,6 +1,5 @@
 <div class="message-feed">
-  @for (message of chatService.chatMessages(); track message.timeStamp) {
+  @for (message of chatService.chatMessages(); track message.id) {
     <app-message [message]="message"></app-message>
   }
-  <div style="background-color: red;">test</div>
 </div>

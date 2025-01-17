@@ -28,7 +28,7 @@ export class ChatComponent implements OnInit {
     if (roomId) {
       try {
         this.chatService.joinRoom(roomId);
-        this.chatService.subscribeToRoom(roomId);
+        // this.chatService.subscribeToRoom(roomId);
       } catch (error) {
         console.error('Failed to connect to room:', error);
       }

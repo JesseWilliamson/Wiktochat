@@ -54,9 +54,10 @@ public class ChatController {
   }
 
   @PostMapping("rooms/{roomId}/messages")
-  public ResponseEntity<Void> sendMessage(@RequestBody GridMessage message, @PathVariable String roomId) {
+  public ResponseEntity<Void> sendMessage(@RequestBody IncomingGridMessage incomingGridMessage, @PathVariable String roomId) {
     try {
-      System.out.println("Send message - Room: " + roomId + " Message: " + message);
+      System.out.println("Send message - Room: " + roomId + " Message: " + incomingGridMessage);
+      GridMessage message = new GridMessage(incomingGridMessage);
       chatService.sendMessage(roomId, message);
       return ResponseEntity.ok().build();
     } catch (RoomNotFoundException e) {

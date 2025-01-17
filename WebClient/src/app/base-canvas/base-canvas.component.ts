@@ -14,7 +14,7 @@ export class BaseCanvasComponent {
   canvas_width = input(1200);
   canvas_height = input(600);
   protected grid = signal<string[][]>([]);
-  
+
   protected readonly DEFAULT_COLOR = '#FFFFFF';
 
   constructor() {
@@ -65,7 +65,7 @@ export class BaseCanvasComponent {
       }
       return row;
     });
-    
+
     // Update the signal with the new grid
     this.grid.set(newGrid);
 
@@ -101,7 +101,6 @@ export class BaseCanvasComponent {
           // Draw on canvas
           const ctx = this.canvas()?.nativeElement.getContext('2d');
           if (ctx) {
-            console.log(`Drawing cell at (${x},${y}) with color ${color}`);
             ctx.fillStyle = color;
             ctx.fillRect(
               this.pixel_size_x * x,

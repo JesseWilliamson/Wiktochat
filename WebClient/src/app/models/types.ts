@@ -38,6 +38,12 @@ export interface GridMessage {
   grid: string[][];
   senderSessionId: string;
   timeStamp: Date;
+  id: string;
 }
 
+export interface OutGoingGridMessage {
+  grid: string[][];
+  senderSessionId: string;
+  timeStamp: Date;
+}
 
