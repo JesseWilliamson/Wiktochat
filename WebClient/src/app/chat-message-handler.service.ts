@@ -1,5 +1,4 @@
 import { Injectable, signal, effect } from '@angular/core';
-import { StompSubscription } from '@stomp/stompjs';
 import { generateUUID } from './libs/utils';
 import {
   CreateRoomResponse,
@@ -12,7 +11,8 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root',
 })
 export class ChatMessageHandlerService {
-  private readonly chatMessages = signal<GridMessage[]>([]);
+  private readonly _chatMessages = signal<GridMessage[]>([]);
+  public readonly chatMessages = this._chatMessages.asReadonly();
   private readonly roomId = signal<string>('');
   private readonly sessionId = generateUUID();
   private readonly isJoiningRoom = signal<boolean>(false);
@@ -22,8 +22,12 @@ export class ChatMessageHandlerService {
     private readonly http: HttpClient
   ) {
     effect(() => {
-      console.log(this.chatMessages());
+      console.log(this._chatMessages());
     });
+  }
+
+  public getChatMessages(): GridMessage[] {
+    return this._chatMessages();
   }
 
   public getServerSentEvent(url: string): EventSource {
@@ -42,7 +46,7 @@ export class ChatMessageHandlerService {
     this.http.get(`/rooms/${roomKey}/messages`).subscribe({
       next: (messages) => {
         console.log('Messages:', messages);
-        this.chatMessages.set(messages as GridMessage[]);
+        this._chatMessages.set(messages as GridMessage[]);
       },
       error: (error) => {
         console.error('Error fetching messages:', error);
@@ -58,7 +62,7 @@ export class ChatMessageHandlerService {
 
         eventSource.addEventListener('message', (event) => {
           const message = JSON.parse(event.data) as GridMessage;
-          this.chatMessages.update((messages) => [message, ...messages]);
+          this._chatMessages.update((messages) => [message, ...messages]);
         });
 
         eventSource.addEventListener('error', (error) => {
