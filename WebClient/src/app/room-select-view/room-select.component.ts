@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ChatMessageHandlerService } from '../chat-message-handler.service';
+import { ChatMessageHandlerService } from '@app/services/chat-message-handler.service';
 
 @Component({
   selector: 'app-room-select',
@@ -14,8 +14,8 @@ export class RoomSelectComponent {
   protected roomId = '';
 
   constructor(
-    private router: Router,
-    private chatService: ChatMessageHandlerService,
+    private readonly router: Router,
+    private readonly chatService: ChatMessageHandlerService,
   ) {}
 
   public async createRoom() {

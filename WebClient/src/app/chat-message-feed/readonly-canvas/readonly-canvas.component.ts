@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, signal, viewChild, afterNextRender, computed } from '@angular/core';
+import { Component, ElementRef, input, viewChild, afterNextRender, computed } from '@angular/core';
 
 @Component({
   selector: 'app-readonly-canvas',

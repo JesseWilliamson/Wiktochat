@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
-import { RoomSelectComponent } from './room-select/room-select.component';
-import { ChatComponent } from './chat/chat.component';
+import { RoomSelectComponent } from './room-select-view/room-select.component';
+import { ChatRoomViewComponent } from './chat-room-view/chat-room-view.component';
 
 export const routes: Routes = [
   { path: '', component: RoomSelectComponent },
-  { path: 'chat/:roomId', component: ChatComponent },
+  { path: 'chat/:roomId', component: ChatRoomViewComponent },
 ];

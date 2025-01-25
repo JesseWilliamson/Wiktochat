@@ -1,6 +1,6 @@
-import { Component, input, viewChild, afterNextRender } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { GridMessage } from '../models/types';
+import { GridMessage } from '@app/models/types';
 import { ReadonlyCanvasComponent } from '../readonly-canvas/readonly-canvas.component';
 
 @Component({
@@ -12,7 +12,4 @@ import { ReadonlyCanvasComponent } from '../readonly-canvas/readonly-canvas.comp
 })
 export class MessageComponent {
   message = input.required<GridMessage>();
-
-  constructor() {
-  }
 }

@@ -1,10 +1,10 @@
 import { Injectable, signal, effect } from '@angular/core';
-import { generateUUID } from './libs/utils';
+import { generateUUID } from '@app/libs/utils';
 import {
   CreateRoomResponse,
   GridMessage,
   OutGoingGridMessage,
-} from './models/types';
+} from '@app/models/types';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable({
@@ -97,7 +97,7 @@ export class ChatMessageHandlerService {
         console.log('Room created:', response.roomId);
         if (onSuccess) {
           this.roomId.set(response.roomId ?? '');
-          onSuccess(response.roomId || null);
+          onSuccess(response.roomId ?? null);
         }
         this.isCreatingRoom.set(false);
       },

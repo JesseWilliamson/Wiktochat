@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
-import { MessageComponent } from '../chat-message/message.component';
-import { ChatMessageHandlerService } from '../chat-message-handler.service';
+import { MessageComponent } from './chat-message/message.component';
 import { CommonModule } from '@angular/common';
+import { ChatMessageHandlerService } from '@app/services/chat-message-handler.service';
 
 @Component({
   selector: 'app-message-feed',
@@ -11,7 +11,5 @@ import { CommonModule } from '@angular/common';
   styleUrl: './message-feed.component.less',
 })
 export class MessageFeedComponent {
-  constructor(protected chatService: ChatMessageHandlerService) {
-    //TODO: Stick to bottom of messages list
-  }
+  constructor(protected chatService: ChatMessageHandlerService) {}
 }
