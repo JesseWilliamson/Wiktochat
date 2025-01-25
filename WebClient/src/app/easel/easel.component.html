@@ -1,10 +1,9 @@
 <div class="easel-container">
-  <app-drawable-canvas
+  <!-- <app-drawable-canvas
     [selectedColor]="selectedColor"
-    [canvas_width]="1200"
-    [canvas_height]="600"
   >
-  </app-drawable-canvas>
+  </app-drawable-canvas> -->
+  <app-writable-canvas></app-writable-canvas>
   <div class="controls">
     <div class="leftControls">
       <input type="color" [(ngModel)]="selectedColor" id="colorPicker" />
