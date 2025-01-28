@@ -20,11 +20,7 @@ export class ChatMessageHandlerService {
 
   constructor(
     private readonly http: HttpClient
-  ) {
-    effect(() => {
-      console.log(this._chatMessages());
-    });
-  }
+  ) {}
 
   public getChatMessages(): GridMessage[] {
     return this._chatMessages();
@@ -40,12 +36,10 @@ export class ChatMessageHandlerService {
       return;
     }
 
-    console.log('Joining room:', roomKey);
     this.isJoiningRoom.set(true);
 
     this.http.get(`/rooms/${roomKey}/messages`).subscribe({
       next: (messages) => {
-        console.log('Messages:', messages);
         this._chatMessages.set(messages as GridMessage[]);
       },
       error: (error) => {
@@ -94,7 +88,6 @@ export class ChatMessageHandlerService {
 
     this.http.post<CreateRoomResponse>('/rooms', this.sessionId).subscribe({
       next: (response) => {
-        console.log('Room created:', response.roomId);
         if (onSuccess) {
           this.roomId.set(response.roomId ?? '');
           onSuccess(response.roomId ?? null);
@@ -116,9 +109,6 @@ export class ChatMessageHandlerService {
     } as OutGoingGridMessage;
 
     this.http.post(`/rooms/${this.roomId()}/messages`, payload).subscribe({
-      next: () => {
-        console.log('Grid message sent successfully');
-      },
       error: (error) => {
         console.error('Error sending message:', error);
       },

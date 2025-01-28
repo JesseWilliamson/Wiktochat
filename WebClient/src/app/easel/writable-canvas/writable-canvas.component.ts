@@ -18,7 +18,7 @@ export class WritableCanvasComponent {
   canvas_height = input(130);
   background_color = input('#FFFFFF');
 
-  private grid = signal<string[][]>([]);
+  private readonly grid = signal<string[][]>([]);
   private lastPos: Point | null = null;
   private pointerDownFlag = false;
 
@@ -46,6 +46,10 @@ export class WritableCanvasComponent {
       .fill(null)
       .map(() => Array<string>(this.canvas_height()).fill(this.background_color()));
     this.grid.set(initialGrid);
+
+    document.addEventListener('pointerdown', (e) => this.pointerDown(e));
+    document.addEventListener('pointermove', (e) => this.pointerMove(e));
+    document.addEventListener('pointerup', () => this.pointerUp());
   }
 
   protected pointerDown(event: PointerEvent) {
@@ -54,11 +58,15 @@ export class WritableCanvasComponent {
   }
 
   protected pointerMove(event: PointerEvent) {
+    if (!this.pointerDownFlag) {
+      return;
+    };
     this.draw(event);
   }
 
   protected pointerUp() {
-    this.stopDrawing();
+    this.pointerDownFlag = false;
+    this.lastPos = null;
   }
 
   clearGrid(): void {
@@ -78,9 +86,13 @@ export class WritableCanvasComponent {
     return this.grid();
   }
 
-  private getGridPosition(x: number, y: number): Point {
+  private getGridPosition(clientX: number, clientY: number): Point {
     const rect = this.canvas()?.nativeElement.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };
+
+    // Calculate position relative to canvas using client coordinates
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
 
     const scaleX = this.canvas_width() / rect.width;
     const scaleY = this.canvas_height() / rect.height;
@@ -142,15 +154,37 @@ export class WritableCanvasComponent {
     ctx.fillRect(x, y, 1, 1);
   }
 
-  private stopDrawing(): void {
-    this.pointerDownFlag = false;
-    this.lastPos = null;
+  private isPointInGrid(x: number, y: number): boolean {
+    return x >= 0 && x < this.canvas_width() && y >= 0 && y < this.canvas_height();
+  }
+
+  private isPointerInCanvas(clientX: number, clientY: number): boolean {
+    const position = this.getGridPosition(clientX, clientY);
+
+    return (
+      position.x >= 0 &&
+      position.x < this.canvas_width() &&
+      position.y >= 0 &&
+      position.y < this.canvas_height()
+    );
+  }
+
+  protected onPointerLeave(e: PointerEvent) {
+    if (!this.lastPos) return;
+    const position = this.getGridPosition(e.clientX, e.clientY);
+    const points = this.interpolatePoints(this.lastPos, position);
+    for (const point of points) {
+      this.drawCell(point.x, point.y, this.selectedColor());
+    }
   }
 
   private draw(e: PointerEvent): void {
-    if (!this.pointerDownFlag) return;
+    const position = this.getGridPosition(e.clientX, e.clientY);
 
-    const position = this.getGridPosition(e.offsetX, e.offsetY);
+    if (!this.isPointerInCanvas(e.clientX, e.clientY)) {
+      this.lastPos = position;  // Store the calculated position even when outside
+      return;
+    }
 
     if (this.lastPos) {
       const points = this.interpolatePoints(this.lastPos, position);

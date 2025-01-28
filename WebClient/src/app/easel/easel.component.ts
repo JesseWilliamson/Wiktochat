@@ -21,9 +21,6 @@ export class EaselComponent {
   }
 
   sendGrid() {
-    console.log('Sending grid');
-    console.log(this.canvas());
-    console.log(this.canvas()?.getGrid());
     const gridData = this.canvas()?.getGrid() ?? [];
     this.chatService.sendGridMessage(gridData);
   }
