@@ -1,7 +1,7 @@
 import { Component, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatMessageHandlerService } from '@app/services/chat-message-handler.service';
-import { WritableCanvasComponent } from './writable-canvas/writable-canvas.component';
+import { WritableCanvasComponent } from '../writable-canvas/writable-canvas.component';
 
 @Component({
   selector: 'app-easel',

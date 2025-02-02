@@ -1,5 +1,5 @@
 <div class="message-feed">
   @for (message of chatService.chatMessages(); track message.id) {
-    <app-message [message]="message"></app-message>
+    <app-chat-message [message]="message"></app-chat-message>
   }
 </div>

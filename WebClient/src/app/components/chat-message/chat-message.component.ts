@@ -1,15 +1,15 @@
 import { Component, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { GridMessage } from '@app/models/types';
+import { GridMessage } from '@app/components/models/types';
 import { ReadonlyCanvasComponent } from '../readonly-canvas/readonly-canvas.component';
 
 @Component({
-  selector: 'app-message',
+  selector: 'app-chat-message',
   standalone: true,
   imports: [DatePipe, ReadonlyCanvasComponent],
-  templateUrl: './message.component.html',
-  styleUrl: './message.component.less',
+  templateUrl: './chat-message.component.html',
+  styleUrl: './chat-message.component.less',
 })
-export class MessageComponent {
+export class ChatMessageComponent {
   message = input.required<GridMessage>();
 }

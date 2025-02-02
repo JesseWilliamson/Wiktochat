@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { EaselComponent } from '@app/easel/easel.component';
-import { MessageFeedComponent } from '@app/chat-message-feed/message-feed.component';
+import { EaselComponent } from '@app/components/easel/easel.component';
+import { ChatMessageFeedComponent } from '@app/components/chat-message-feed/chat-message-feed.component';
 import { ChatMessageHandlerService } from '@app/services/chat-message-handler.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-chat-room-view',
   standalone: true,
-  imports: [EaselComponent, MessageFeedComponent],
+  imports: [EaselComponent, ChatMessageFeedComponent],
   templateUrl: './chat-room-view.component.html',
   styleUrl: './chat-room-view.component.less',
 })

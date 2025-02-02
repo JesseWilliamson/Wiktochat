@@ -4,7 +4,7 @@ import {
   CreateRoomResponse,
   GridMessage,
   OutGoingGridMessage,
-} from '@app/models/types';
+} from '@app/components/models/types';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable({
