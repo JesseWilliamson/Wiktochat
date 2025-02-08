@@ -1,10 +1,8 @@
-.easel-container {
+:host {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  height: 100%;
-  width: 100%;
 }
 
 app-writable-canvas {
@@ -15,8 +13,10 @@ app-writable-canvas {
 .controls {
   width: 100%;
   border: 1px solid black;
+  gap: 20px;
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: space-between;
   box-sizing: border-box;
   padding: 10px 20px;
@@ -25,6 +25,7 @@ app-writable-canvas {
 .controlsBlock {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
 }

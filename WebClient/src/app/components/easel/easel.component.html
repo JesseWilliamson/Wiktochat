@@ -1,16 +1,14 @@
-<div class="easel-container">
-  <app-writable-canvas></app-writable-canvas>
-  <div class="controls">
-    <div class="controlsBlock">
-      <input type="color" [(ngModel)]="selectedColor" id="colorPicker" />
-      <button class="primary">_</button>
-      <button class="icon">text_fields</button>
-      <button class="icon">ink_eraser</button>
-      <button class="icon" (click)="clearGrid()">delete</button>
-    </div>
-    <div class="controlsBlock">
-      <button (click)="clearGrid()">Clear</button>
-      <button class="primary" (click)="sendGrid()">Send</button>
-    </div>
+<app-writable-canvas></app-writable-canvas>
+<div class="controls">
+  <div class="controlsBlock">
+    <input type="color" [(ngModel)]="selectedColor" id="colorPicker" />
+    <button class="primary">_</button>
+    <button class="icon">text_fields</button>
+    <button class="icon">ink_eraser</button>
+    <button class="icon" (click)="clearGrid()">delete</button>
+  </div>
+  <div class="controlsBlock">
+    <button (click)="clearGrid()">Clear</button>
+    <button class="primary" (click)="sendGrid()">Send</button>
   </div>
 </div>
