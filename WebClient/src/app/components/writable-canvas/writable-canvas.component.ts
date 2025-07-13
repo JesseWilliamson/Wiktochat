@@ -83,7 +83,12 @@ export class WritableCanvasComponent {
   }
 
   getGrid(): string[][] {
-    return this.grid();
+    try {
+      return this.grid();
+    } catch (error) {
+      console.error('Error getting grid data:', error);
+      return [];
+    }
   }
 
   private getGridPosition(clientX: number, clientY: number): Point {

@@ -22,12 +22,29 @@ export class EaselComponent {
   }
 
   sendGrid() {
-    const gridData = this.canvas()?.getGrid() ?? [];
-    const message: OutGoingGridMessage = {
-      grid: gridData,
-      senderSessionId: this.chatService['sessionId'],
-      timeStamp: new Date()
-    };
-    this.chatService.sendMessage(message);
+    try {
+      const gridData = this.canvas()?.getGrid() ?? [];
+      
+      // Ensure grid data is valid
+      if (!gridData.length || !gridData[0]?.length) {
+        console.warn('Cannot send empty grid');
+        return;
+      }
+      
+      const message: OutGoingGridMessage = {
+        grid: gridData,
+        type: 'grid_message',
+        senderSessionId: this.chatService['sessionId'],
+        timeStamp: new Date()
+      };
+      
+      this.chatService.sendMessage(message);
+      
+      // Clear the canvas after sending
+      this.clearGrid();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // TODO: Show error to user using a notification service
+    }
   }
 }

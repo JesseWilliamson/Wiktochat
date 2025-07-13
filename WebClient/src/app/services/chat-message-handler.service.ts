@@ -1,4 +1,4 @@
-import { Injectable, signal, OnDestroy } from '@angular/core';
+import { Injectable, signal, OnDestroy, computed } from '@angular/core';
 import { generateUUID } from '@app/libs/utils';
 import {
   CreateRoomResponse,
@@ -7,12 +7,15 @@ import {
 } from '@app/components/models/types';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-// Using dynamic import to avoid TypeScript module resolution issues
+// WebSocket configuration
 const environment = {
   ws: {
+    // Always connect to the backend server on port 8080 for WebSockets
     url: (roomId: string) => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${protocol}//${window.location.host}/ws/chat/${roomId}`;
+      // Use localhost:8080 for development
+      const host = 'localhost:8080';
+      return `${protocol}//${host}/ws/chat/${roomId}`;
     }
   }
 };
@@ -24,17 +27,18 @@ import { catchError, tap, switchAll, retryWhen, delay } from 'rxjs/operators';
 })
 export class ChatMessageHandlerService implements OnDestroy {
   private readonly _chatMessages = signal<GridMessage[]>([]);
-  public readonly chatMessages = this._chatMessages.asReadonly();
+  // Expose messages with newest at the bottom
+  public readonly chatMessages = computed(() => [...this._chatMessages()]);
   private readonly roomId = signal<string>('');
   private readonly sessionId = generateUUID();
   private readonly isJoiningRoom = signal<boolean>(false);
   private readonly isCreatingRoom = signal<boolean>(false);
-  
+
   // WebSocket related properties
   private socket$: WebSocketSubject<GridMessage> | null = null;
-  private messagesSubject = new Subject<Observable<GridMessage>>();
-  public messages$ = this.messagesSubject.pipe(switchAll(), catchError(e => throwError(e)));
-  
+  private messagesSubject = new Subject<GridMessage>();
+  public messages$: Observable<GridMessage> = this.messagesSubject.asObservable();
+
   // Reconnection handling
   private reconnectAttempts = 0;
   private readonly MAX_RECONNECT_ATTEMPTS = 5;
@@ -50,45 +54,58 @@ export class ChatMessageHandlerService implements OnDestroy {
   }
 
   private connect(roomId: string) {
-    if (this.socket$ && !this.socket$.closed) {
+    if (this.socket$) {
       return;
     }
 
-    const wsUrl = this.getWebSocketUrl(roomId);
-    console.log(`Connecting to WebSocket at ${wsUrl}`);
-    
     try {
-      this.socket$ = this.createWebSocket(wsUrl);
-      
-      const messages = this.socket$.pipe(
-        tap({
-          next: (message: GridMessage) => {
-            console.log('Received message:', message);
-            this._chatMessages.update(messages => [message, ...messages]);
-          },
-          error: (error: Event) => {
-            console.error('WebSocket error:', error);
-            this.handleDisconnection(roomId);
-          },
-          complete: () => {
-            console.log('WebSocket connection completed');
-            this.handleDisconnection(roomId);
-          }
-        }),
-        retryWhen(errors => 
-          errors.pipe(
-            tap(err => console.error('WebSocket error, retrying...', err)),
-            delay(this.RECONNECT_INTERVAL)
-          )
-        )
-      );
-      
-      this.messagesSubject.next(messages);
-      
+      const url = this.getWebSocketUrl(roomId);
+      this.socket$ = this.createWebSocket(url);
+
+      // Reset the messages subject for the new connection
+      this.messagesSubject = new Subject<GridMessage>();
+      this.messages$ = this.messagesSubject.asObservable();
+
+      // Subscribe to the WebSocket and forward messages to our subject
+      this.socket$.subscribe({
+        next: (message: GridMessage) => {
+          this.handleIncomingMessage(message);
+        },
+        error: (error: any) => {
+          console.error('WebSocket error:', error);
+          this.messagesSubject.error(error);
+          this.handleDisconnection(roomId);
+        },
+        complete: () => {
+          this.messagesSubject.complete();
+          this.handleDisconnection(roomId);
+        }
+      });
     } catch (error) {
       console.error('Error creating WebSocket connection:', error);
       this.handleDisconnection(roomId);
     }
+  }
+
+  private handleIncomingMessage(message: GridMessage) {
+    // Skip connection messages and empty messages
+    if (message.type === 'connection_established' || 
+        (!('content' in message) && 
+         (!message.grid || message.grid.length === 0) &&
+         message.type !== 'chat_message')) {
+      return;
+    }
+    
+    // Update messages with the new one
+    this._chatMessages.update(currentMessages => {
+      // Add new message to the end of the array (maintain chronological order)
+      const newMessages = [...currentMessages, message];
+      
+      // Emit the new message through the subject
+      this.messagesSubject.next(message);
+      
+      return newMessages;
+    });
   }
 
   private createWebSocket(url: string): WebSocketSubject<GridMessage> {
@@ -96,13 +113,11 @@ export class ChatMessageHandlerService implements OnDestroy {
       url,
       openObserver: {
         next: () => {
-          console.log('WebSocket connection established');
           this.reconnectAttempts = 0;
         }
       },
       closeObserver: {
-        next: (event: CloseEvent) => {
-          console.log('WebSocket connection closed', event);
+        next: () => {
           this.handleDisconnection(this.roomId());
         }
       },
@@ -111,17 +126,23 @@ export class ChatMessageHandlerService implements OnDestroy {
         try {
           return JSON.parse(e.data);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error, e.data);
-          throw error;
+          console.error('Error parsing WebSocket message:', error);
+          return {
+            type: 'error',
+            error: 'Invalid message format'
+          } as unknown as GridMessage;
         }
       },
       serializer: (value: GridMessage) => {
-        try {
-          return JSON.stringify(value);
-        } catch (error) {
-          console.error('Error serializing WebSocket message:', error, value);
-          throw error;
-        }
+        const message = {
+          ...value,
+          senderSessionId: value.senderSessionId || this.sessionId,
+          roomId: value.roomId || this.roomId(),
+          timeStamp: value.timeStamp || new Date(),
+          type: value.type || 'grid_message',
+          id: value.id || generateUUID()
+        };
+        return JSON.stringify(message);
       }
     });
   }
@@ -133,8 +154,6 @@ export class ChatMessageHandlerService implements OnDestroy {
   private handleDisconnection(roomId: string) {
     if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-      console.log(`Attempting to reconnect in ${delay}ms...`);
-      
       this.reconnectTimeout = setTimeout(() => {
         this.reconnectAttempts++;
         this.connect(roomId);
@@ -150,7 +169,7 @@ export class ChatMessageHandlerService implements OnDestroy {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-    
+
     if (this.socket$) {
       this.socket$.complete();
       this.socket$ = null;
@@ -176,8 +195,10 @@ export class ChatMessageHandlerService implements OnDestroy {
     // First, get message history
     this.http.get(`/rooms/${roomKey}/messages`).subscribe({
       next: (messages) => {
+        // Messages from server are in chronological order (oldest first)
+        // We'll keep them in this order in the signal
         this._chatMessages.set(messages as GridMessage[]);
-        
+
         // Then join the room
         const headers = new HttpHeaders({
           'Content-Type': 'application/json'
@@ -186,7 +207,7 @@ export class ChatMessageHandlerService implements OnDestroy {
           next: () => {
             // Connect to WebSocket after successfully joining
             this.connect(roomKey);
-            
+
             if (onSuccess) {
               onSuccess();
             }
@@ -240,36 +261,53 @@ export class ChatMessageHandlerService implements OnDestroy {
       return;
     }
 
-    // Create a new GridMessage with all required properties
+    // Skip connection messages from being sent or added to history
+    if (message.type === 'connection_established') {
+      return;
+    }
+
+    // Ensure we have a valid message type
+    const messageType = message.type || 'grid_message';
+
+    // Create a complete message object with all required fields
     const messageToSend: GridMessage = {
-      ...message,
-      id: generateUUID(), // Generate a unique ID for the message
-      type: 'chat_message',
+      id: generateUUID(),
+      type: messageType,
       senderSessionId: this.sessionId,
-      timeStamp: new Date(), // Use Date object instead of string
+      timeStamp: new Date(),
       roomId: roomId,
-      // Add any other required properties from the GridMessage interface
       grid: message.grid || []
     };
 
-    if (this.socket$ && !this.socket$.closed) {
-      try {
-        this.socket$.next(messageToSend);
-      } catch (error) {
-        console.error('Error sending WebSocket message:', error);
+    // Only send if we have a valid grid
+    if (messageToSend.grid && messageToSend.grid.length > 0) {
+      // Add message to local state immediately for optimistic updates
+      this.handleIncomingMessage({ ...messageToSend });
+
+      // Try to send via WebSocket first, with fallback to HTTP
+      const sendViaWebSocket = (): boolean => {
+        if (this.socket$ && !this.socket$.closed) {
+          try {
+            this.socket$.next(messageToSend);
+            return true;
+          } catch (error) {
+            console.error('Error sending message via WebSocket:', error);
+            return false;
+          }
+        }
+        return false;
+      };
+
+      // Try to send via WebSocket first
+      if (!sendViaWebSocket()) {
+        // If WebSocket fails, try HTTP fallback
         this.fallbackToHttp(roomId, messageToSend);
       }
-    } else {
-      console.warn('WebSocket not connected, falling back to HTTP');
-      this.fallbackToHttp(roomId, messageToSend);
     }
   }
 
   private fallbackToHttp(roomId: string, message: GridMessage) {
     this.http.post(`/rooms/${roomId}/messages`, message).subscribe({
-      next: () => {
-        console.log('Message sent via HTTP fallback');
-      },
       error: (err) => {
         console.error('Error sending message via HTTP fallback:', err);
       },

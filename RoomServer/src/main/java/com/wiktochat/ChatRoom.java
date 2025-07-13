@@ -20,7 +20,8 @@ public class ChatRoom {
   }
 
   public List<GridMessage> getMessages() {
-    return messages;
+    // Return a new list to prevent external modification
+    return new ArrayList<>(messages);
   }
 
   public String getRoomId() {

@@ -1,8 +1,9 @@
-import { Component, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { Component, HostListener, ViewChild, ElementRef, computed, effect, inject } from '@angular/core';
 import { ChatMessageComponent } from '@app/components/chat-message/chat-message.component';
 import { CommonModule } from '@angular/common';
 import { ChatMessageHandlerService } from '@app/services/chat-message-handler.service';
 import { ReadonlyCanvasComponent } from '../readonly-canvas/readonly-canvas.component';
+import { GridMessage } from '@app/components/models/types';
 
 @Component({
   selector: 'app-chat-message-feed-scroller',
@@ -13,18 +14,47 @@ import { ReadonlyCanvasComponent } from '../readonly-canvas/readonly-canvas.comp
 })
 export class ChatMessageFeedScrollerComponent {
   @ViewChild('thumbnailsContainer') thumbnailsContainer!: ElementRef;
+
+  private chatService = inject(ChatMessageHandlerService);
   
-  constructor(protected chatService: ChatMessageHandlerService) {}
+  // Get messages in reverse chronological order (newest first)
+  messages = computed<GridMessage[]>(() => {
+    const messages = [...this.chatService.chatMessages()];
+    return messages.sort((a, b) =>
+      new Date(b.timeStamp).getTime() - new Date(a.timeStamp).getTime()
+    );
+  });
 
   highlightedMessageId: string | null = null;
+  private lastMessageId: string | null = null;
   private currentIndex = 0;
   private readonly SCROLL_PADDING = 20; // Padding to maintain at top/bottom
+
+  constructor() {
+    // Watch for new messages and highlight the most recent one
+    effect(() => {
+      const messages = this.messages();
+      if (messages.length > 0) {
+        const newestMessage = messages[0]; // First item is newest due to sorting
+        
+        // Only update if we have a new message
+        if (newestMessage.id !== this.lastMessageId) {
+          this.highlightedMessageId = newestMessage.id;
+          this.lastMessageId = newestMessage.id;
+          this.currentIndex = 0; // Reset scroll position to newest
+          
+          // Scroll to show the highlighted message
+          setTimeout(() => this.scrollToHighlighted(), 0);
+        }
+      }
+    });
+  }
 
   @HostListener('wheel', ['$event'])
   onScroll(event: WheelEvent) {
     event.preventDefault();
-    
-    const messages = this.chatService.chatMessages();
+
+    const messages = this.messages();
     if (!messages.length) return;
 
     // For column-reverse, positive deltaY (scroll down) should decrease the index
@@ -36,17 +66,27 @@ export class ChatMessageFeedScrollerComponent {
       this.currentIndex = Math.min(this.currentIndex + 1, messages.length - 1);
     }
 
-    this.highlightedMessageId = messages[this.currentIndex].id;
+    this.highlightedMessageId = messages[this.currentIndex]?.id || null;
     this.scrollToHighlighted();
   }
 
   private scrollToHighlighted() {
+    if (!this.thumbnailsContainer?.nativeElement) return;
+    
     const container = this.thumbnailsContainer.nativeElement;
     const thumbnails = container.children;
     if (!thumbnails.length) return;
 
-    // In column-reverse, the elements are in reverse order in the DOM
-    const highlightedThumbnail = thumbnails[this.currentIndex];
+    // Find the index of the highlighted message in the DOM
+    let targetIndex = 0;
+    for (let i = 0; i < thumbnails.length; i++) {
+      if (thumbnails[i].getAttribute('data-message-id') === this.highlightedMessageId) {
+        targetIndex = i;
+        break;
+      }
+    }
+
+    const highlightedThumbnail = thumbnails[targetIndex];
     if (!highlightedThumbnail) return;
 
     const containerRect = container.getBoundingClientRect();

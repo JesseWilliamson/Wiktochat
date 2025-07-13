@@ -1,8 +1,9 @@
 <div class="message-feed">
   <button class="icon">arrow_drop_up</button>
   <div class="thumbnails" #thumbnailsContainer>
-    @for (message of chatService.chatMessages(); track message.id) {
+    @for (message of messages(); track message.id) {
       <app-readonly-canvas
+        [attr.data-message-id]="message.id"
         [grid]="message.grid"
         [class.highlighted]="message.id === highlightedMessageId">
       </app-readonly-canvas>

@@ -48,12 +48,13 @@ public class ChatController {
     public HttpResponse<?> sendMessage(@Body IncomingGridMessage incomingGridMessage, @PathVariable String roomId) {
         try {
             System.out.println("Send message - Room: " + roomId + " Message: " + incomingGridMessage);
-            GridMessage message = new GridMessage(incomingGridMessage);
-            chatService.sendMessage(roomId, message);
+            chatService.sendMessage(roomId, incomingGridMessage);
             return HttpResponse.ok();
         } catch (RoomNotFoundException e) {
             return HttpResponse.notFound();
         } catch (Exception e) {
+            System.err.println("Error in sendMessage: " + e.getMessage());
+            e.printStackTrace();
             return HttpResponse.badRequest();
         }
     }

@@ -6,6 +6,8 @@ import io.micronaut.core.async.publisher.Publishers;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -31,24 +33,31 @@ public class WebSocketHandler implements AutoCloseable {
         String sessionId = session.getId();
         sessions.put(sessionId, session);
         LOG.info("WebSocket opened for room: {}, session: {}", roomId, sessionId);
-
-        // Register message consumer
-        Consumer<GridMessage> messageConsumer = message -> {
-            if (session.isOpen()) {
-                session.sendAsync(message);
-            }
-        };
-
-        messageConsumers.put(sessionId, messageConsumer);
-        chatService.subscribeToRoom(roomId, messageConsumer);
-
+        
         try {
+            // Add user to the room
+            chatService.joinRoom(sessionId, roomId);
+            LOG.info("User {} successfully joined room {}", sessionId, roomId);
+            
+            // Register message consumer
+            Consumer<GridMessage> messageConsumer = message -> {
+                if (session.isOpen()) {
+                    session.sendAsync(message);
+                }
+            };
+
+            messageConsumers.put(sessionId, messageConsumer);
+            chatService.subscribeToRoom(roomId, messageConsumer);
+            LOG.info("Message consumer registered for user {} in room {}", sessionId, roomId);
+
             // Send message history to the new client
             for (GridMessage message : chatService.getMessages(roomId)) {
                 session.sendAsync(message);
             }
-        } catch (RoomNotFoundException e) {
-            LOG.error("Room not found: {}", roomId, e);
+            LOG.info("Sent message history to user {} in room {}", sessionId, roomId);
+            
+        } catch (Exception e) {
+            LOG.error("Error during WebSocket connection setup for room: {}, session: {}", roomId, sessionId, e);
             return Publishers.empty();
         }
 
@@ -57,20 +66,23 @@ public class WebSocketHandler implements AutoCloseable {
 
     @OnMessage
     public Publisher<Void> onMessage(String roomId, IncomingGridMessage message, WebSocketSession session) {
-        String sessionId = session.getId();
-        LOG.debug("Received message in room {} from session {}: {}", roomId, sessionId, message);
+        String messageSessionId = message.getSenderSessionId();
+        String socketSessionId = session.getId();
+        
+        LOG.info("Received message from session {} (socket: {}) in room {}: {}", 
+                messageSessionId, socketSessionId, roomId, message);
 
         try {
-            GridMessage gridMessage = new GridMessage(message);
-            gridMessage.setSenderSessionId(sessionId);
-            gridMessage.setRoomId(roomId);
-            gridMessage.setTimeStamp(new java.util.Date());
-
-            // Process the message through the chat service
-            chatService.sendMessage(roomId, gridMessage);
+            // Ensure the user is in the room with their message session ID
+            if (!chatService.isUserInRoom(messageSessionId, roomId)) {
+                LOG.info("Adding user {} to room {} based on message session", messageSessionId, roomId);
+                chatService.joinRoom(messageSessionId, roomId);
+            }
+            
+            // Forward the message to the chat service
+            chatService.sendMessage(roomId, message);
         } catch (Exception e) {
             LOG.error("Error processing message: {}", e.getMessage(), e);
-            return Publishers.empty();
         }
         return Publishers.empty();
     }
