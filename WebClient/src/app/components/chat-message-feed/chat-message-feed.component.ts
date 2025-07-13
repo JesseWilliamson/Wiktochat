@@ -9,9 +9,9 @@ import {
   computed,
   inject,
   DestroyRef,
-  type Signal
+  type Signal,
+  effect
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ChatMessageComponent } from '@app/components/chat-message/chat-message.component';
 import { CommonModule } from '@angular/common';
 import { ChatMessageHandlerService } from '@app/services/chat-message-handler.service';
@@ -53,27 +53,32 @@ export class ChatMessageFeedComponent implements OnInit, AfterViewInit {
   showEmojiPicker = false;
 
   ngOnInit(): void {
-    // Subscribe to message updates with automatic cleanup
     // Use a Set to track processed message IDs and prevent duplicates
     const processedMessageIds = new Set<string>();
 
-    this.chatService.messages$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(message => {
-        // Skip if we've already processed this message
-        if (processedMessageIds.has(message.id)) {
-          console.log('Skipping duplicate message in feed:', message.id);
-          return;
-        }
+    // Use effect to react to new messages
+    effect(() => {
+      const latestMessage = this.chatService.latestMessage();
 
-        // Mark this message as processed
-        processedMessageIds.add(message.id);
+      // Skip null messages (initial state)
+      if (!latestMessage) {
+        return;
+      }
 
-        if (this.shouldAutoScroll) {
-          this.cdr.detectChanges();
-          requestAnimationFrame(() => this.scrollToBottom());
-        }
-      });
+      // Skip if we've already processed this message
+      if (processedMessageIds.has(latestMessage.id)) {
+        console.log('Skipping duplicate message in feed:', latestMessage.id);
+        return;
+      }
+
+      // Mark this message as processed
+      processedMessageIds.add(latestMessage.id);
+
+      if (this.shouldAutoScroll) {
+        this.cdr.detectChanges();
+        requestAnimationFrame(() => this.scrollToBottom());
+      }
+    });
   }
 
   /**

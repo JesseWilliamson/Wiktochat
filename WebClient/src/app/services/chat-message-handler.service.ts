@@ -1,4 +1,4 @@
-import { Injectable, signal, OnDestroy, computed } from '@angular/core';
+import { Injectable, signal, OnDestroy, computed, effect, Signal } from '@angular/core';
 import { generateUUID } from '@app/libs/utils';
 import {
   CreateRoomResponse,
@@ -6,7 +6,7 @@ import {
   OutGoingGridMessage,
 } from '@app/components/models/types';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+
 // WebSocket configuration
 const environment = {
   ws: {
@@ -19,8 +19,6 @@ const environment = {
     }
   }
 };
-import { Observable, Subject, throwError } from 'rxjs';
-import { catchError, tap, switchAll, retryWhen, delay } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -38,10 +36,12 @@ export class ChatMessageHandlerService implements OnDestroy {
   private readonly isJoiningRoom = signal<boolean>(false);
   private readonly isCreatingRoom = signal<boolean>(false);
 
+  // New message signal to replace the Subject
+  private readonly _latestMessage = signal<GridMessage | null>(null);
+  public readonly latestMessage = computed(() => this._latestMessage());
+
   // WebSocket related properties
-  private socket$: WebSocketSubject<GridMessage> | null = null;
-  private messagesSubject = new Subject<GridMessage>();
-  public messages$: Observable<GridMessage> = this.messagesSubject.asObservable();
+  private socket: WebSocket | null = null;
 
   // Reconnection handling
   private reconnectAttempts = 0;
@@ -58,38 +58,13 @@ export class ChatMessageHandlerService implements OnDestroy {
   }
 
   private connect(roomId: string, initialMessageIds?: Set<string>) {
-    if (this.socket$) {
+    if (this.socket) {
       return;
     }
 
     try {
       const url = this.getWebSocketUrl(roomId);
-      this.socket$ = this.createWebSocket(url);
-
-      // Reset the messages subject for the new connection
-      this.messagesSubject = new Subject<GridMessage>();
-      this.messages$ = this.messagesSubject.asObservable();
-
-      // Subscribe to the WebSocket and forward messages to our subject
-      this.socket$.subscribe({
-        next: (message: GridMessage) => {
-          // Skip messages that were already loaded via HTTP
-          if (initialMessageIds && initialMessageIds.has(message.id)) {
-            console.log('[Service] Skipping already loaded message from WebSocket:', message.id);
-            return;
-          }
-          this.handleIncomingMessage(message);
-        },
-        error: (error: any) => {
-          console.error('WebSocket error:', error);
-          this.messagesSubject.error(error);
-          this.handleDisconnection(roomId);
-        },
-        complete: () => {
-          this.messagesSubject.complete();
-          this.handleDisconnection(roomId);
-        }
-      });
+      this.createWebSocket(url, initialMessageIds);
     } catch (error) {
       console.error('Error creating WebSocket connection:', error);
       this.handleDisconnection(roomId);
@@ -98,16 +73,19 @@ export class ChatMessageHandlerService implements OnDestroy {
 
   private handleIncomingMessage(message: GridMessage) {
     console.log('[Service] Processing incoming message:', message.id, message.type);
-    
+
     // Skip connection messages and empty messages
-    if (message.type === 'connection_established' || 
-        (!('content' in message) && 
+    if (message.type === 'connection_established' ||
+        (!('content' in message) &&
          (!message.grid || message.grid.length === 0) &&
          message.type !== 'chat_message')) {
       console.log('[Service] Skipping message:', message.id, '- empty or connection message');
       return;
     }
-    
+
+    // Set latest message signal
+    this._latestMessage.set(message);
+
     // Check if message already exists in the array by ID
     const existingMessages = this._chatMessages();
     const existingMessageById = existingMessages.find(m => m.id === message.id);
@@ -115,14 +93,14 @@ export class ChatMessageHandlerService implements OnDestroy {
       console.warn('[Service] Duplicate message detected by ID:', message.id);
       return; // Skip adding duplicate messages
     }
-    
+
     // Also check for content-based duplicates (messages with different IDs but same content)
     const contentDuplicate = existingMessages.find(m => this.areMessagesEqual(m, message));
     if (contentDuplicate) {
       console.warn('[Service] Duplicate message detected by content:', message.id);
       return; // Skip adding content duplicates
     }
-    
+
     // Update messages with the new one
     this._chatMessages.update(currentMessages => {
       // Add new message to the array
@@ -132,49 +110,51 @@ export class ChatMessageHandlerService implements OnDestroy {
       console.log('[Service] Added message to state:', message.id, '- Total messages:', newMessages.length);
       return newMessages;
     });
-    
-    // Emit the new message through the subject
-    console.log('[Service] Emitting message through subject:', message.id);
-    this.messagesSubject.next(message);
   }
 
-  private createWebSocket(url: string): WebSocketSubject<GridMessage> {
-    return webSocket<GridMessage>({
-      url,
-      openObserver: {
-        next: () => {
-          this.reconnectAttempts = 0;
-        }
-      },
-      closeObserver: {
-        next: () => {
-          this.handleDisconnection(this.roomId());
-        }
-      },
-      binaryType: 'arraybuffer',
-      deserializer: (e: MessageEvent) => {
-        try {
-          return JSON.parse(e.data);
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-          return {
-            type: 'error',
-            error: 'Invalid message format'
-          } as unknown as GridMessage;
-        }
-      },
-      serializer: (value: GridMessage) => {
-        const message = {
-          ...value,
-          senderSessionId: value.senderSessionId || this.sessionId,
-          roomId: value.roomId || this.roomId(),
-          timeStamp: value.timeStamp || new Date(),
-          type: value.type || 'grid_message',
-          id: value.id || generateUUID()
+  private createWebSocket(url: string, initialMessageIds?: Set<string>): void {
+    this.socket = new WebSocket(url);
+
+    this.socket.onopen = () => {
+      console.log('WebSocket connection established');
+      this.reconnectAttempts = 0;
+    };
+
+    this.socket.onclose = () => {
+      console.log('WebSocket connection closed');
+      this.socket = null;
+      this.handleDisconnection(this.roomId());
+    };
+
+    this.socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      this.handleDisconnection(this.roomId());
+    };
+
+    this.socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        // Ensure we have a valid message object
+        const message: GridMessage = {
+          id: data.id || generateUUID(),
+          type: data.type || 'unknown',
+          senderSessionId: data.senderSessionId || 'unknown',
+          timeStamp: data.timeStamp ? new Date(data.timeStamp) : new Date(),
+          roomId: data.roomId || '',
+          grid: data.grid || [],
         };
-        return JSON.stringify(message);
+
+        // Skip messages that were already loaded via HTTP
+        if (initialMessageIds && initialMessageIds.has(message.id)) {
+          console.log('[Service] Skipping already loaded message from WebSocket:', message.id);
+          return;
+        }
+
+        this.handleIncomingMessage(message);
+      } catch (err) {
+        console.error('Error deserializing message:', err);
       }
-    });
+    };
   }
 
   private getWebSocketUrl(roomId: string): string {
@@ -185,35 +165,36 @@ export class ChatMessageHandlerService implements OnDestroy {
   private initialMessageIds: Set<string> | undefined;
 
   private handleDisconnection(roomId: string) {
+    // Close and clean up the socket
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+    }
+
+    // Attempt reconnection if we haven't exceeded max attempts
     if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
-      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+      this.reconnectAttempts++;
+      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})...`);
+
       this.reconnectTimeout = setTimeout(() => {
-        this.reconnectAttempts++;
-        console.log('[Service] Attempting reconnection, attempt:', this.reconnectAttempts);
-        this.connect(roomId, this.initialMessageIds);
-      }, delay);
-    } else {
-      console.error('Max reconnection attempts reached');
-      // Optionally, you could notify the user here
+        this.connect(roomId);
+      }, this.RECONNECT_INTERVAL);
     }
   }
 
   private disconnect() {
+    // Clear any pending reconnection
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
 
-    if (this.socket$) {
-      this.socket$.complete();
-      this.socket$ = null;
+    // Close the WebSocket connection
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
     }
   }
-
-  // This method is no longer needed as we expose chatMessages as a signal
-  // public getChatMessages(): GridMessage[] {
-  //   return this._chatMessages();
-  // }
 
   public getServerSentEvent(url: string): EventSource {
     return new EventSource(url, { withCredentials: true });
@@ -226,45 +207,55 @@ export class ChatMessageHandlerService implements OnDestroy {
     }
 
     this.isJoiningRoom.set(true);
-    console.log('[Service] Joining room:', roomKey);
 
-    // First, get message history
-    this.http.get(`/rooms/${roomKey}/messages`).subscribe({
+    // Set the current room ID
+    this.roomId.set(roomKey);
+
+    // Fetch existing messages first
+    this.http.get<GridMessage[]>(`/rooms/${roomKey}/messages`).subscribe({
       next: (messages) => {
-        // Messages from server are in chronological order (oldest first)
-        const initialMessages = messages as GridMessage[];
-        const initialMessageIds = new Set(initialMessages.map(msg => msg.id));
-        this._chatMessages.set(initialMessages);
-        
-        // Store the initial message IDs for reconnection handling
-        this.initialMessageIds = initialMessageIds;
-        console.log('[Service] Stored', initialMessageIds.size, 'initial message IDs to prevent duplicates');
-        
-        // Join the room via HTTP
-        const headers = new HttpHeaders({
-          'Content-Type': 'application/json'
-        });
-        this.http.post(`/rooms/${roomKey}/members`, { sessionId: this.sessionId }, { headers }).subscribe({
-          next: () => {
-            console.log('[Service] Successfully joined room:', roomKey);
-            
-            // Connect to WebSocket after successfully joining
-            this.connect(roomKey, initialMessageIds);
+        // Process existing messages
+        if (messages && messages.length > 0) {
+          console.log(`[Service] Loaded ${messages.length} messages from HTTP`);
 
-            if (onSuccess) {
-              onSuccess();
-            }
-            this.roomId.set(roomKey);
-            this.isJoiningRoom.set(false);
-          },
-          error: (error) => {
-            console.error('Error joining room:', error);
-            this.isJoiningRoom.set(false);
-          },
-        });
+          // Track IDs of messages we've loaded via HTTP to avoid duplicates from WebSocket
+          const initialMessageIds = new Set<string>();
+
+          // Update messages in state
+          this._chatMessages.update(currentMessages => {
+            // Filter out messages that already exist in our state
+            const newMessages = messages.filter(message => {
+              // Add all message IDs to our tracking set
+              initialMessageIds.add(message.id);
+
+              // Check if this message already exists in our current messages
+              return !currentMessages.some(existingMsg => existingMsg.id === message.id);
+            });
+
+            // Return updated messages array
+            return [...currentMessages, ...newMessages];
+          });
+
+          // Connect to WebSocket after loading initial messages
+          this.connect(roomKey, initialMessageIds);
+
+          if (onSuccess) {
+            onSuccess();
+          }
+        } else {
+          // No existing messages, just connect to WebSocket
+          console.log('[Service] No existing messages, connecting to WebSocket');
+          this.connect(roomKey);
+
+          if (onSuccess) {
+            onSuccess();
+          }
+        }
+
+        this.isJoiningRoom.set(false);
       },
       error: (error) => {
-        console.error('Error fetching messages:', error);
+        console.error('Error joining room:', error);
         this.isJoiningRoom.set(false);
       },
     });
@@ -328,7 +319,7 @@ export class ChatMessageHandlerService implements OnDestroy {
     if (messageToSend.grid && messageToSend.grid.length > 0) {
       // Check if a message with identical content already exists to prevent duplicates
       const existingMessages = this._chatMessages();
-      const isDuplicate = existingMessages.some(existingMsg => 
+      const isDuplicate = existingMessages.some(existingMsg =>
         this.areMessagesEqual(existingMsg, messageToSend)
       );
 
@@ -341,10 +332,10 @@ export class ChatMessageHandlerService implements OnDestroy {
       this.handleIncomingMessage({ ...messageToSend });
 
       // Try to send via WebSocket first
-      if (this.socket$ && !this.socket$.closed) {
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         try {
           console.log('[Service] Sending message via WebSocket:', messageToSend.id);
-          this.socket$.next(messageToSend);
+          this.socket.send(JSON.stringify(messageToSend));
         } catch (error) {
           console.error('Error sending message via WebSocket:', error);
           // If WebSocket fails, try HTTP fallback
@@ -365,16 +356,16 @@ export class ChatMessageHandlerService implements OnDestroy {
   private areMessagesEqual(msg1: GridMessage, msg2: GridMessage): boolean {
     // If IDs are the same, they're the same message
     if (msg1.id === msg2.id) return true;
-    
+
     // If grid data is identical, consider them duplicates
     if (msg1.grid && msg2.grid) {
       // Compare grid length
       if (msg1.grid.length !== msg2.grid.length) return false;
-      
+
       // Deep compare grid contents
       return JSON.stringify(msg1.grid) === JSON.stringify(msg2.grid);
     }
-    
+
     return false;
   }
 
