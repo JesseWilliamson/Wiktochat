@@ -1,6 +1,7 @@
 import { Component, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatMessageHandlerService } from '@app/services/chat-message-handler.service';
+import { OutGoingGridMessage } from '@app/components/models/types';
 import { WritableCanvasComponent } from '../writable-canvas/writable-canvas.component';
 
 @Component({
@@ -22,6 +23,11 @@ export class EaselComponent {
 
   sendGrid() {
     const gridData = this.canvas()?.getGrid() ?? [];
-    this.chatService.sendGridMessage(gridData);
+    const message: OutGoingGridMessage = {
+      grid: gridData,
+      senderSessionId: this.chatService['sessionId'],
+      timeStamp: new Date()
+    };
+    this.chatService.sendMessage(message);
   }
 }

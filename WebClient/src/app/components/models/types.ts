@@ -34,15 +34,22 @@ export interface Point {
   y: number;
 }
 
+// Base type for all possible property types in GridMessage
+type GridMessageValue = string | number | boolean | Date | string[] | string[][];
+
 export interface GridMessage {
   grid: string[][];
   senderSessionId: string;
   timeStamp: Date;
   id: string;
+  type?: string;
+  roomId?: string;
+  [key: string]: GridMessageValue | undefined; // Allow additional properties with specific types
 }
 
 export interface OutGoingGridMessage {
   grid: string[][];
+  type?: string;
   senderSessionId: string;
   timeStamp: Date;
 }
