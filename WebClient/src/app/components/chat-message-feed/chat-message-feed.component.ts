@@ -49,8 +49,7 @@ export class ChatMessageFeedComponent implements OnInit, AfterViewInit {
   });
   private shouldAutoScroll = true;
 
-  // Emoji button state
-  showEmojiPicker = false;
+  // Component state
 
   ngOnInit(): void {
     // Use a Set to track processed message IDs and prevent duplicates
@@ -110,12 +109,7 @@ export class ChatMessageFeedComponent implements OnInit, AfterViewInit {
     return `${index}-${message.id}`;
   }
 
-  /**
-   * Toggle emoji picker visibility
-   */
-  toggleEmojiPicker(): void {
-    this.showEmojiPicker = !this.showEmojiPicker;
-  }
+  // No need for ngOnDestroy as we're using effect()
 
   // No need for ngOnDestroy as we're using takeUntilDestroyed
 }
