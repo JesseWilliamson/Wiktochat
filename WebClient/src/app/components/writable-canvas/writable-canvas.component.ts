@@ -84,7 +84,13 @@ export class WritableCanvasComponent {
 
   getGrid(): string[][] {
     try {
-      return this.grid();
+      const grid = this.grid();
+      console.log('Getting grid data:', {
+        width: grid.length,
+        height: grid[0]?.length || 0,
+        sample: grid[0]?.[0] || 'empty'
+      });
+      return grid;
     } catch (error) {
       console.error('Error getting grid data:', error);
       return [];

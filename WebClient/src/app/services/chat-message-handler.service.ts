@@ -27,8 +27,12 @@ import { catchError, tap, switchAll, retryWhen, delay } from 'rxjs/operators';
 })
 export class ChatMessageHandlerService implements OnDestroy {
   private readonly _chatMessages = signal<GridMessage[]>([]);
-  // Expose messages with newest at the bottom
-  public readonly chatMessages = computed(() => [...this._chatMessages()]);
+  // Expose messages with oldest at the top and newest at the bottom
+  public readonly chatMessages = computed(() => {
+    const messages = [...this._chatMessages()];
+    // Sort by timestamp (oldest first)
+    return messages.sort((a, b) => new Date(a.timeStamp).getTime() - new Date(b.timeStamp).getTime());
+  });
   private readonly roomId = signal<string>('');
   private readonly sessionId = generateUUID();
   private readonly isJoiningRoom = signal<boolean>(false);
@@ -53,7 +57,7 @@ export class ChatMessageHandlerService implements OnDestroy {
     this.disconnect();
   }
 
-  private connect(roomId: string) {
+  private connect(roomId: string, initialMessageIds?: Set<string>) {
     if (this.socket$) {
       return;
     }
@@ -69,6 +73,11 @@ export class ChatMessageHandlerService implements OnDestroy {
       // Subscribe to the WebSocket and forward messages to our subject
       this.socket$.subscribe({
         next: (message: GridMessage) => {
+          // Skip messages that were already loaded via HTTP
+          if (initialMessageIds && initialMessageIds.has(message.id)) {
+            console.log('[Service] Skipping already loaded message from WebSocket:', message.id);
+            return;
+          }
           this.handleIncomingMessage(message);
         },
         error: (error: any) => {
@@ -88,24 +97,45 @@ export class ChatMessageHandlerService implements OnDestroy {
   }
 
   private handleIncomingMessage(message: GridMessage) {
+    console.log('[Service] Processing incoming message:', message.id, message.type);
+    
     // Skip connection messages and empty messages
     if (message.type === 'connection_established' || 
         (!('content' in message) && 
          (!message.grid || message.grid.length === 0) &&
          message.type !== 'chat_message')) {
+      console.log('[Service] Skipping message:', message.id, '- empty or connection message');
       return;
+    }
+    
+    // Check if message already exists in the array by ID
+    const existingMessages = this._chatMessages();
+    const existingMessageById = existingMessages.find(m => m.id === message.id);
+    if (existingMessageById) {
+      console.warn('[Service] Duplicate message detected by ID:', message.id);
+      return; // Skip adding duplicate messages
+    }
+    
+    // Also check for content-based duplicates (messages with different IDs but same content)
+    const contentDuplicate = existingMessages.find(m => this.areMessagesEqual(m, message));
+    if (contentDuplicate) {
+      console.warn('[Service] Duplicate message detected by content:', message.id);
+      return; // Skip adding content duplicates
     }
     
     // Update messages with the new one
     this._chatMessages.update(currentMessages => {
-      // Add new message to the end of the array (maintain chronological order)
-      const newMessages = [...currentMessages, message];
-      
-      // Emit the new message through the subject
-      this.messagesSubject.next(message);
-      
+      // Add new message to the array
+      const newMessages = [...currentMessages];
+      newMessages.push(message);
+      newMessages.sort((a, b) => new Date(a.timeStamp).getTime() - new Date(b.timeStamp).getTime());
+      console.log('[Service] Added message to state:', message.id, '- Total messages:', newMessages.length);
       return newMessages;
     });
+    
+    // Emit the new message through the subject
+    console.log('[Service] Emitting message through subject:', message.id);
+    this.messagesSubject.next(message);
   }
 
   private createWebSocket(url: string): WebSocketSubject<GridMessage> {
@@ -151,12 +181,16 @@ export class ChatMessageHandlerService implements OnDestroy {
     return environment.ws.url(roomId);
   }
 
+  // Store initial message IDs to prevent duplicates during reconnection
+  private initialMessageIds: Set<string> | undefined;
+
   private handleDisconnection(roomId: string) {
     if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
       this.reconnectTimeout = setTimeout(() => {
         this.reconnectAttempts++;
-        this.connect(roomId);
+        console.log('[Service] Attempting reconnection, attempt:', this.reconnectAttempts);
+        this.connect(roomId, this.initialMessageIds);
       }, delay);
     } else {
       console.error('Max reconnection attempts reached');
@@ -176,9 +210,10 @@ export class ChatMessageHandlerService implements OnDestroy {
     }
   }
 
-  public getChatMessages(): GridMessage[] {
-    return this._chatMessages();
-  }
+  // This method is no longer needed as we expose chatMessages as a signal
+  // public getChatMessages(): GridMessage[] {
+  //   return this._chatMessages();
+  // }
 
   public getServerSentEvent(url: string): EventSource {
     return new EventSource(url, { withCredentials: true });
@@ -191,22 +226,30 @@ export class ChatMessageHandlerService implements OnDestroy {
     }
 
     this.isJoiningRoom.set(true);
+    console.log('[Service] Joining room:', roomKey);
 
     // First, get message history
     this.http.get(`/rooms/${roomKey}/messages`).subscribe({
       next: (messages) => {
         // Messages from server are in chronological order (oldest first)
-        // We'll keep them in this order in the signal
-        this._chatMessages.set(messages as GridMessage[]);
-
-        // Then join the room
+        const initialMessages = messages as GridMessage[];
+        const initialMessageIds = new Set(initialMessages.map(msg => msg.id));
+        this._chatMessages.set(initialMessages);
+        
+        // Store the initial message IDs for reconnection handling
+        this.initialMessageIds = initialMessageIds;
+        console.log('[Service] Stored', initialMessageIds.size, 'initial message IDs to prevent duplicates');
+        
+        // Join the room via HTTP
         const headers = new HttpHeaders({
           'Content-Type': 'application/json'
         });
         this.http.post(`/rooms/${roomKey}/members`, { sessionId: this.sessionId }, { headers }).subscribe({
           next: () => {
+            console.log('[Service] Successfully joined room:', roomKey);
+            
             // Connect to WebSocket after successfully joining
-            this.connect(roomKey);
+            this.connect(roomKey, initialMessageIds);
 
             if (onSuccess) {
               onSuccess();
@@ -279,31 +322,60 @@ export class ChatMessageHandlerService implements OnDestroy {
       grid: message.grid || []
     };
 
+    console.log('[Service] Creating new message with ID:', messageToSend.id);
+
     // Only send if we have a valid grid
     if (messageToSend.grid && messageToSend.grid.length > 0) {
+      // Check if a message with identical content already exists to prevent duplicates
+      const existingMessages = this._chatMessages();
+      const isDuplicate = existingMessages.some(existingMsg => 
+        this.areMessagesEqual(existingMsg, messageToSend)
+      );
+
+      if (isDuplicate) {
+        console.warn('[Service] Prevented sending duplicate message with content:', messageToSend.grid);
+        return;
+      }
+
       // Add message to local state immediately for optimistic updates
       this.handleIncomingMessage({ ...messageToSend });
 
-      // Try to send via WebSocket first, with fallback to HTTP
-      const sendViaWebSocket = (): boolean => {
-        if (this.socket$ && !this.socket$.closed) {
-          try {
-            this.socket$.next(messageToSend);
-            return true;
-          } catch (error) {
-            console.error('Error sending message via WebSocket:', error);
-            return false;
-          }
-        }
-        return false;
-      };
-
       // Try to send via WebSocket first
-      if (!sendViaWebSocket()) {
-        // If WebSocket fails, try HTTP fallback
+      if (this.socket$ && !this.socket$.closed) {
+        try {
+          console.log('[Service] Sending message via WebSocket:', messageToSend.id);
+          this.socket$.next(messageToSend);
+        } catch (error) {
+          console.error('Error sending message via WebSocket:', error);
+          // If WebSocket fails, try HTTP fallback
+          this.fallbackToHttp(roomId, messageToSend);
+        }
+      } else {
+        // No active WebSocket, use HTTP
+        console.log('[Service] Sending message via HTTP fallback:', messageToSend.id);
         this.fallbackToHttp(roomId, messageToSend);
       }
     }
+  }
+
+  /**
+   * Compare two messages to check if they have the same content
+   * This helps prevent duplicate messages
+   */
+  private areMessagesEqual(msg1: GridMessage, msg2: GridMessage): boolean {
+    // If IDs are the same, they're the same message
+    if (msg1.id === msg2.id) return true;
+    
+    // If grid data is identical, consider them duplicates
+    if (msg1.grid && msg2.grid) {
+      // Compare grid length
+      if (msg1.grid.length !== msg2.grid.length) return false;
+      
+      // Deep compare grid contents
+      return JSON.stringify(msg1.grid) === JSON.stringify(msg2.grid);
+    }
+    
+    return false;
   }
 
   private fallbackToHttp(roomId: string, message: GridMessage) {

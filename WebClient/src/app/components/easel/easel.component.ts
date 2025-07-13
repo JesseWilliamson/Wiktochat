@@ -23,6 +23,7 @@ export class EaselComponent {
 
   sendGrid() {
     try {
+      console.log('Sending grid message...');
       const gridData = this.canvas()?.getGrid() ?? [];
       
       // Ensure grid data is valid
@@ -31,6 +32,12 @@ export class EaselComponent {
         return;
       }
       
+      console.log('Grid data:', {
+        width: gridData.length,
+        height: gridData[0]?.length || 0,
+        sample: gridData[0]?.[0] || 'empty'
+      });
+      
       const message: OutGoingGridMessage = {
         grid: gridData,
         type: 'grid_message',
@@ -38,7 +45,9 @@ export class EaselComponent {
         timeStamp: new Date()
       };
       
+      console.log('Sending message:', message);
       this.chatService.sendMessage(message);
+      console.log('Message sent successfully');
       
       // Clear the canvas after sending
       this.clearGrid();

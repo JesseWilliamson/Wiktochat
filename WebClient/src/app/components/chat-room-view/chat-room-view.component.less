@@ -15,7 +15,7 @@
   padding: 20px;
 
   // Side by side on wider screens
-  app-chat-message-feed-scroller {
+  app-chat-message-feed {
     flex: 1;  // Takes available space
     min-width: 300px;
   }
@@ -28,7 +28,7 @@
   @media (max-width: 900px) {
     flex-direction: column;
 
-    app-chat-message-feed-scroller {
+    app-chat-message-feed {
       height: 50%; // Take half the height
     }
 
@@ -38,17 +38,4 @@
   }
 }
 
-app-chat-message-feed {
-  display: flex;
-  flex-direction: column-reverse;
-  height: 100%;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 1px solid black;
-  border-radius: 4px;
-  overflow-y: auto;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
+// Styles for app-chat-message-feed are now defined in the component itself

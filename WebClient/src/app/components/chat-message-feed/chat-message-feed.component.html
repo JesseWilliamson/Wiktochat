@@ -1,37 +1,20 @@
 <div class="chat-container">
-  <!-- Thumbnail Scroller -->
-  <div class="message-scroller">
-    <button class="icon-button" (click)="scrollToMessage(-1)" title="Scroll to newest">
-      <span class="material-icons">arrow_drop_up</span>
-    </button>
-    <div class="thumbnails" #thumbnailsContainer>
-      @for (message of thumbnails; track message.id) {
-        <div class="thumbnail-container"
-             [class.highlighted]="message.id === highlightedMessageId"
-             (click)="scrollToThumbnail(message.id)">
-          <app-readonly-canvas
-            [attr.data-message-id]="message.id"
-            [grid]="message.grid">
-          </app-readonly-canvas>
-        </div>
-      }
-    </div>
-    <button class="icon-button" (click)="scrollToMessage(1)" title="Scroll to oldest">
-      <span class="material-icons">arrow_drop_down</span>
-    </button>
-  </div>
-
   <!-- Main Message Feed -->
-  <div class="message-feed" #messageContainer>
-    @for (message of chatMessages; track trackByMessageId($index, message); let last = $last) {
-      <app-chat-message [message]="message" [class.highlighted]="message.id === highlightedMessageId"></app-chat-message>
-
-      <!-- Auto-scroll to bottom when new message arrives -->
-      @if (last) {
-        <div #scrollAnchor></div>
-      }
+  <main class="message-feed" #messageContainer>
+    @for (message of chatMessages(); track trackByMessageId($index, message); let last = $last) {
+      <app-chat-message [message]="message">
+      </app-chat-message>
     } @empty {
-      <div class="empty-state">No messages yet. Be the first to send one!</div>
+      <div class="empty-state" role="status">No messages yet. Be the first to send one!</div>
     }
-  </div>
+  </main>
+
+  <!-- Emoji Button -->
+  <button
+    class="emoji-button"
+    (click)="toggleEmojiPicker()"
+    title="Show emoji picker"
+    aria-label="Show emoji picker">
+    <span class="emoji-icon">😸</span>
+  </button>
 </div>
